@@ -24,7 +24,9 @@ import static org.openrewrite.java.Assertions.java;
  *       methodPattern: com.azure.core.client.traits.HttpTrait addPolicy(..)
  *       newMethodName: addHttpPipelinePolicy
  *       matchOverrides: true
- *
+ *   - com.azure.recipes.v2recipes.DeleteMethod:
+ *       methodPattern: com.azure.core.client.traits.HttpTrait clientOptions(..)
+ *       matchOverrides: true
  * @author Annabelle Mittendorf Smith
  */
 

@@ -14,9 +14,12 @@ import org.openrewrite.java.tree.*;
 
 /**
  * Recipe to find and delete a method.
- * In current version:
- * - Method pattern hard coded as: "com.azure.core.client.traits.HttpTrait clientOptions(..)"
- * TODO: Refactor to parameterised recipe for any method deletion.
+ * Currently only deletes method declarations.
+ * NOT SAFE WHEN DELETED METHOD IS INVOKED!!
+ * TODO: Expand to handle method invocations safely.
+ *  Either turn invocations to their own method declarations,
+ *  Or delete method invocations as well.
+ *
  * @author Annabelle Mittendorf Smith
  */
 
@@ -77,8 +80,6 @@ public class DeleteMethod extends Recipe {
 
              * Recipe is adapted from:
              * org.openrewrite.staticanalysis.NoFinalizer
-             * TODO: Maybe, include method uses
-             * TODO: Maybe, use pre-screening
              */
 
             @Override
@@ -87,7 +88,7 @@ public class DeleteMethod extends Recipe {
                 cd = cd.withBody(cd.getBody().withStatements(ListUtils.map(
                         cd.getBody().getStatements(), statement -> {
                             if (statement instanceof J.MethodDeclaration) {
-                                if (methodMatcher.matches((J.MethodDeclaration) statement, classDeclaration)) {
+                                if (methodMatcher.matches(((J.MethodDeclaration) statement).getMethodType())){
                                     return null;
                                 }
                             }

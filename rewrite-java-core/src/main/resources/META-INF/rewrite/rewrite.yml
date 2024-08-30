@@ -129,7 +129,7 @@ recipeList:
       newMethodName: addHttpPipelinePolicy
       matchOverrides: true
   # Custom recipe to delete a method.
-  # WARNING: may cause errors if method was important!
+  # WARNING: Only deletes declaration. Any invocations become un-compilable.
   - com.azure.recipes.v2recipes.DeleteMethod:
       methodPattern: com.azure.core.client.traits.HttpTrait clientOptions(..)
       matchOverrides: true
