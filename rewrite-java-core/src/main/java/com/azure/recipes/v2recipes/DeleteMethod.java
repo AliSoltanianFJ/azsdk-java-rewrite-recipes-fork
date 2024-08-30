@@ -1,6 +1,11 @@
 package com.azure.recipes.v2recipes;
 
-import org.jetbrains.annotations.NotNull;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.openrewrite.internal.lang.NonNull;
+import org.openrewrite.internal.lang.Nullable;
+import lombok.EqualsAndHashCode;
+import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.java.JavaIsoVisitor;
@@ -15,28 +20,17 @@ import org.openrewrite.java.tree.*;
  * @author Annabelle Mittendorf Smith
  */
 
+@Value
+@EqualsAndHashCode(callSuper = true)
 public class DeleteMethod extends Recipe {
 
     /**
-     * Methods to return name and description of recipe.
+     * Collect recipe parameters.
      */
-    @Override
-    public @NlsRewrite.DisplayName @NotNull String getDisplayName() {
-        return "Delete method unfinished";
-    }
-
-    @Override
-    public @NlsRewrite.Description @NotNull String getDescription() {
-        return "Deletes a method without proper safety checks.";
-    }
-
-    /**
-     * Methods to collect recipe parameters defined in recipe declaration.
-     */
-/*
     @Option(displayName = "Method pattern",
-    description = "A method pattern that is used to find matching method declarations/invocations.",
-    example = "com.example.Foo bar(..)")
+            description = "A method pattern that is used to find matching method declarations/invocations.",
+            example = "com.example.Foo bar(..)")
+    @NonNull
     String methodPattern;
 
     @Option(displayName = "Match on overrides",
@@ -44,54 +38,64 @@ public class DeleteMethod extends Recipe {
             required = false)
     @Nullable
     Boolean matchOverrides;
-*/
 
-    @Override
-    public @NotNull TreeVisitor<?, ExecutionContext> getVisitor() {
-        return new DeleteMethodVisitor();
+    // All recipes must be serializable. This is verified by RewriteTest.rewriteRun() in your tests.
+    @JsonCreator
+    public DeleteMethod(@NonNull @JsonProperty("methodPattern") String methodPattern,
+                        @Nullable @JsonProperty("matchOverrides") Boolean matchOverrides) {
+        this.methodPattern = methodPattern;
+        if (matchOverrides != null) this.matchOverrides = matchOverrides;
+        else this.matchOverrides = Boolean.TRUE;
     }
 
     /**
-     * The visitor used to apply the recipe.
+     * Return recipe name and description.
      */
-    private static class DeleteMethodVisitor extends JavaIsoVisitor<ExecutionContext> {
+    @Override
+    public @NlsRewrite.DisplayName @NonNull String getDisplayName() {
+        return "Delete method unfinished";
+    }
 
-        /* Temporary hardcoded values */
-        static String methodPattern = "com.azure.core.client.traits.HttpTrait clientOptions(..)";
-        static Boolean matchOverrides = true;
+    @Override
+    public @NlsRewrite.Description @NonNull String getDescription() {
+        return "Deletes a method without proper safety checks.";
+    }
 
-        /**
-         * Method matcher to identify method to delete.
-         */
-        private static final MethodMatcher methodMatcher = new MethodMatcher(methodPattern, matchOverrides);
 
-        /**
-         * Method that applies the recipe logic.
-         * Visits each class declaration and returns a copy (more-or-less) leaving out
-         * the method to be deleted.
-         * @return A visitor without the stated method.
 
-         * Recipe is adapted from:
-         * org.openrewrite.staticanalysis.NoFinalizer
-         * TODO: Maybe, include method uses
-         * TODO: Maybe, use pre-screening
-         */
 
-        @Override
-        public J.@NotNull ClassDeclaration visitClassDeclaration(J.@NotNull ClassDeclaration classDeclaration, @NotNull ExecutionContext executionContext) {
-            J.ClassDeclaration cd = super.visitClassDeclaration(classDeclaration, executionContext);
-            cd = cd.withBody(cd.getBody().withStatements(ListUtils.map(
-                    cd.getBody().getStatements(), statement -> {
-                        if (statement instanceof J.MethodDeclaration) {
-                            if (methodMatcher.matches((J.MethodDeclaration) statement, classDeclaration)) {
-                                return null;
+    @Override
+    public @NonNull TreeVisitor<?, ExecutionContext> getVisitor() {
+        MethodMatcher methodMatcher = new MethodMatcher(methodPattern, true);
+
+        return new JavaIsoVisitor<ExecutionContext>() {
+            /**
+             * Method that applies the recipe logic.
+             * Visits each class declaration and returns a copy (more-or-less) leaving out
+             * the method to be deleted.
+             * @return A visitor without the stated method.
+
+             * Recipe is adapted from:
+             * org.openrewrite.staticanalysis.NoFinalizer
+             * TODO: Maybe, include method uses
+             * TODO: Maybe, use pre-screening
+             */
+
+            @Override
+            public J.@NonNull ClassDeclaration visitClassDeclaration(J.@NonNull ClassDeclaration classDeclaration, @NonNull ExecutionContext executionContext) {
+                J.ClassDeclaration cd = super.visitClassDeclaration(classDeclaration, executionContext);
+                cd = cd.withBody(cd.getBody().withStatements(ListUtils.map(
+                        cd.getBody().getStatements(), statement -> {
+                            if (statement instanceof J.MethodDeclaration) {
+                                if (methodMatcher.matches((J.MethodDeclaration) statement, classDeclaration)) {
+                                    return null;
+                                }
                             }
+                            return statement;
                         }
-                        return statement;
-                    }
-            )));
-            return cd;
-        }
+                )));
+                return cd;
+            }
+        };
     }
 }
-

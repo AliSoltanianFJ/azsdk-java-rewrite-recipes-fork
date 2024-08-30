@@ -115,7 +115,7 @@ recipeList:
   # Recipes to migrate implementations of com.azure.core.client.traits.HttpTrait
   # to io.clientcore.core.models.traits.HttpTrait
   # Add http prefix to renamed methods
-  # TODO: Filter for implementing classes
+  # TODO: Filter for implementing classes ??
   - org.openrewrite.java.ChangeMethodName:
       methodPattern: com.azure.core.client.traits.HttpTrait retryOptions(..)
       newMethodName: httpRetryOptions
@@ -128,13 +128,17 @@ recipeList:
       methodPattern: com.azure.core.client.traits.HttpTrait addPolicy(..)
       newMethodName: addHttpPipelinePolicy
       matchOverrides: true
-  - com.azure.recipes.v2recipes.DeleteMethod
+  # Custom recipe to delete a method.
+  # WARNING: may cause errors if method was important!
+  - com.azure.recipes.v2recipes.DeleteMethod:
+      methodPattern: com.azure.core.client.traits.HttpTrait clientOptions(..)
+      matchOverrides: true
   # TODO: Add method httpRedirectOptions and HttpRedirectOptions variable
   # End HttpTrait recipes
   # Recipe to change com.azure.core.credential package name to io.clientcore.core.credential
   - org.openrewrite.java.ChangePackage:
-        oldPackageName: com.azure.core.credential
-        newPackageName: io.clientcore.core.credential
+      oldPackageName: com.azure.core.credential
+      newPackageName: io.clientcore.core.credential
 
   # --------------------------------
   #
