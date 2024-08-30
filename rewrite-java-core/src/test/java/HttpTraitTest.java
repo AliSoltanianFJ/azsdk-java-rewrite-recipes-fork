@@ -28,7 +28,7 @@ import static org.openrewrite.java.Assertions.java;
  * @author Annabelle Mittendorf Smith
  */
 
-public class HttpTraitRenameMethodsTest implements RewriteTest {
+public class HttpTraitTest implements RewriteTest {
     /**
      * This method defines recipes used for testing.
      * @param spec stores settings for testing environment.
@@ -102,6 +102,47 @@ public class HttpTraitRenameMethodsTest implements RewriteTest {
                 "    public BlankHttpTrait httpRetryOptions(RetryOptions retryOptions) {\n" +
                 "        return null;\n" +
                 "    }\n" +
+                "}";
+
+        rewriteRun(
+                java(before,after)
+        );
+    }
+
+    /**
+     * Test that non-interface methods with the same name are not deleted.
+     */
+    @Test
+    void testDoesNotDeleteNonInheritedMethod() {
+        @Language("java")String noChange = "public class TestClass {\n" +
+                "    public void clientOptions() {\n" +
+                "    }\n" +
+                "}\n";
+        rewriteRun(java(noChange));
+    }
+
+    /**
+     * Test deletion of target method declaration ONLY.
+     */
+
+    @Test
+    void testMethodDeclarationDeleted() {
+        @Language("java") String before = "import com.azure.core.client.traits.HttpTrait;\n" +
+                "import com.azure.core.util.ClientOptions;\n" +
+                "\n" +
+                "public class BlankHttpTrait implements HttpTrait<BlankHttpTrait> {\n" +
+                "    public ClientOptions clientOptions;\n" +
+                "    @Override\n" +
+                "    public BlankHttpTrait clientOptions(ClientOptions clientOptions) {\n" +
+                "        return null;\n" +
+                "    }\n" +
+                "}";
+
+        @Language("java") String after = "import com.azure.core.client.traits.HttpTrait;\n" +
+                "import com.azure.core.util.ClientOptions;\n" +
+                "\n" +
+                "public class BlankHttpTrait implements HttpTrait<BlankHttpTrait> {\n" +
+                "    public ClientOptions clientOptions;\n" +
                 "}";
 
         rewriteRun(
