@@ -1,5 +1,3 @@
-import com.azure.recipes.v2recipes.DeleteMethod;
-
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 import org.openrewrite.test.RecipeSpec;
@@ -29,7 +27,8 @@ public class HttpTraitDeleteMethodTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
 
-        spec.recipe(new DeleteMethod());
+        spec.recipeFromResource("/META-INF/rewrite/rewrite.yml",
+                "com.azure.rewrite.java.core.MigrateAzureCoreSamplesToAzureCoreV2");
 
     }
 
