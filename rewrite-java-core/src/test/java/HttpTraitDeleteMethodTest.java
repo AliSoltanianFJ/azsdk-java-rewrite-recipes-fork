@@ -1,3 +1,5 @@
+import com.azure.recipes.v2recipes.DeleteMethod;
+
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 import org.openrewrite.test.RecipeSpec;
@@ -27,7 +29,7 @@ public class HttpTraitDeleteMethodTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
 
-        // spec.recipe(new DeleteMethod());
+        spec.recipe(new DeleteMethod());
 
     }
 
@@ -44,8 +46,9 @@ public class HttpTraitDeleteMethodTest implements RewriteTest {
     }
 
     /**
-     * Test deletion of target method ONLY.
+     * Test deletion of target method declaration ONLY.
      */
+
     @Test
     void DeleteMethodSuccessful() {
         @Language("java") String before = "import com.azure.core.client.traits.HttpTrait;\n" +
@@ -70,5 +73,6 @@ public class HttpTraitDeleteMethodTest implements RewriteTest {
                 java(before,after)
         );
     }
+
 
 }
