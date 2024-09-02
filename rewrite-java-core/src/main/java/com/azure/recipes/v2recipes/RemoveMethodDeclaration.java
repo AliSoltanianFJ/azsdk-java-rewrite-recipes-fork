@@ -13,26 +13,19 @@ import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.tree.*;
 
 /**
- * Recipe to find and delete a method.
- * Currently only deletes method declarations.
- * NOT SAFE WHEN DELETED METHOD IS INVOKED!!
- * TODO: Expand to handle method invocations safely.
- *  Either turn invocations to their own method declarations,
- *  Or delete method invocations as well.
- *
+ * Recipe to find and delete a method Declaration.
+ * ONLY deletes method declarations.
  * @author Annabelle Mittendorf Smith
  */
 
 @Value
 @EqualsAndHashCode(callSuper = true)
-public class DeleteMethod extends Recipe {
+public class RemoveMethodDeclaration extends Recipe {
 
-    /**
-     * Collect recipe parameters.
-     */
+    /* Collect recipe parameters. */
     @Option(displayName = "Method pattern",
-            description = "A method pattern that is used to find matching method declarations/invocations.",
-            example = "com.example.Foo bar(..)")
+            description = "A method pattern used to find matching method declaration.",
+            example = "*..* hello(..)")
     @NonNull
     String methodPattern;
 
@@ -42,45 +35,38 @@ public class DeleteMethod extends Recipe {
     @Nullable
     Boolean matchOverrides;
 
-    // All recipes must be serializable. This is verified by RewriteTest.rewriteRun() in your tests.
+    @Override
+    public @NlsRewrite.DisplayName @NonNull String getDisplayName() {
+        return "Remove method declarations";
+    }
+
+    @Override
+    public @NlsRewrite.Description @NonNull String getDescription() {
+        return "Un-safe deletes method declaration matching `methodPattern`.";
+    }
+
+    /**
+     * All recipes must be serializable. This is verified by RewriteTest.rewriteRun() in your tests.
+     * Json creator allows your recipes to be used from a yaml file.
+     */
     @JsonCreator
-    public DeleteMethod(@NonNull @JsonProperty("methodPattern") String methodPattern,
-                        @Nullable @JsonProperty("matchOverrides") Boolean matchOverrides) {
+    public RemoveMethodDeclaration(@NonNull @JsonProperty("methodPattern") String methodPattern,
+                                   @Nullable @JsonProperty("matchOverrides") Boolean matchOverrides) {
         this.methodPattern = methodPattern;
         if (matchOverrides != null) this.matchOverrides = matchOverrides;
         else this.matchOverrides = Boolean.TRUE;
     }
 
     /**
-     * Return recipe name and description.
+     * getVisitor
+     *
+     * @return TreeVisitor
      */
     @Override
-    public @NlsRewrite.DisplayName @NonNull String getDisplayName() {
-        return "Delete method unfinished";
-    }
-
-    @Override
-    public @NlsRewrite.Description @NonNull String getDescription() {
-        return "Deletes a method without proper safety checks.";
-    }
-
-
-
-
-    @Override
     public @NonNull TreeVisitor<?, ExecutionContext> getVisitor() {
-        MethodMatcher methodMatcher = new MethodMatcher(methodPattern, true);
+        MethodMatcher methodMatcher = new MethodMatcher(methodPattern, matchOverrides);
 
         return new JavaIsoVisitor<ExecutionContext>() {
-            /**
-             * Method that applies the recipe logic.
-             * Visits each class declaration and returns a copy (more-or-less) leaving out
-             * the method to be deleted.
-             * @return A visitor without the stated method.
-
-             * Recipe is adapted from:
-             * org.openrewrite.staticanalysis.NoFinalizer
-             */
 
             @Override
             public J.@NonNull ClassDeclaration visitClassDeclaration(J.@NonNull ClassDeclaration classDeclaration, @NonNull ExecutionContext executionContext) {
