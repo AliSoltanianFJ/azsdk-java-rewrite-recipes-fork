@@ -19,7 +19,7 @@ import org.openrewrite.java.tree.*;
  */
 
 @Value
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 public class RemoveMethodDeclaration extends Recipe {
 
     /* Collect recipe parameters. */
@@ -53,8 +53,7 @@ public class RemoveMethodDeclaration extends Recipe {
     public RemoveMethodDeclaration(@NonNull @JsonProperty("methodPattern") String methodPattern,
                                    @Nullable @JsonProperty("matchOverrides") Boolean matchOverrides) {
         this.methodPattern = methodPattern;
-        if (matchOverrides != null) this.matchOverrides = matchOverrides;
-        else this.matchOverrides = Boolean.TRUE;
+        this.matchOverrides = matchOverrides;
     }
 
     /**

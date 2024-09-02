@@ -11,22 +11,17 @@ import static org.openrewrite.java.Assertions.java;
  * To: io.clientcore.core.models.traits.HttpTrait
 
  * Testing simple method renaming.
- * Recipes:
- *   - org.openrewrite.java.ChangeMethodName:
- *       methodPattern: com.azure.core.client.traits.HttpTrait retryOptions(..)
- *       newMethodName: httpRetryOptions
- *       matchOverrides: true
- *   - org.openrewrite.java.ChangeMethodName:
- *       methodPattern: com.azure.core.client.traits.HttpTrait pipeline(..)
- *       newMethodName: httpPipeline
- *       matchOverrides: true
- *   - org.openrewrite.java.ChangeMethodName:
- *       methodPattern: com.azure.core.client.traits.HttpTrait addPolicy(..)
- *       newMethodName: addHttpPipelinePolicy
- *       matchOverrides: true
- *   - com.azure.recipes.v2recipes.DeleteMethod:
- *       methodPattern: com.azure.core.client.traits.HttpTrait clientOptions(..)
- *       matchOverrides: true
+ * Recipes Tested:
+ *   org.openrewrite.java.ChangeMethodName
+ *       retryOptions to httpRetryOptions
+ *       pipeline to httpPipeline
+ *       addPolicy to addHttpPipelinePolicy
+ *   com.azure.recipes.v2recipes.RemoveMethodCall
+ *       clientOptions
+ *   com.com.azure.recipes.v2recipes.RemoveMethodDeclaration
+ *       clientOptions
+ *   TODO: Add method recipe httpRedirectOptions and HttpRedirectOptions variable
+ *
  * @author Annabelle Mittendorf Smith
  */
 
@@ -52,6 +47,8 @@ public class HttpTraitTest implements RewriteTest {
                 "    public void pipeline() {\n" +
                 "    }\n" +
                 "    public void addPolicy() {\n" +
+                "    }\n" +
+                "    public void clientOptions() {\n" +
                 "    }\n" +
                 "}\n";
         rewriteRun(java(noChange));
