@@ -22,7 +22,7 @@ import org.openrewrite.java.tree.*;
 @EqualsAndHashCode(callSuper = false)
 public class RemoveMethodDeclaration extends Recipe {
 
-    /* Collect recipe parameters. */
+
     @Option(displayName = "Method pattern",
             description = "A method pattern used to find matching method declaration.",
             example = "*..* hello(..)")
