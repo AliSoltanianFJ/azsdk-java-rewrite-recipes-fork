@@ -5,6 +5,7 @@ import org.openrewrite.test.RewriteTest;
 
 import static org.openrewrite.java.Assertions.java;
 
+
 /**
  * An (interface) HttpTrait migration test.
  * From: com.azure.core.client.traits.HttpTrait
@@ -145,6 +146,101 @@ public class HttpTraitTest implements RewriteTest {
                 "}";
 
         rewriteRun(
+                java(before,after)
+        );
+    }
+
+    @Test
+    void testMissingMethodAdded() {
+        @Language("java") String before = "import com.azure.core.client.traits.HttpTrait;\n" +
+                "import com.azure.core.http.HttpClient;\n" +
+                "import com.azure.core.http.HttpPipeline;\n" +
+                "import com.azure.core.http.policy.HttpLogOptions;\n" +
+                "import com.azure.core.http.policy.HttpPipelinePolicy;\n" +
+                "import com.azure.core.http.policy.RetryOptions;\n" +
+                "import com.azure.core.util.ClientOptions;\n" +
+                "\n" +
+                "public class TestClass implements HttpTrait<TestClass> {\n" +
+                "\n" +
+                "    @Override\n" +
+                "    public TestClass httpClient(HttpClient httpClient) {\n" +
+                "        return null;\n" +
+                "    }\n" +
+                "\n" +
+                "    @Override\n" +
+                "    public TestClass pipeline(HttpPipeline pipeline) {\n" +
+                "        return null;\n" +
+                "    }\n" +
+                "\n" +
+                "    @Override\n" +
+                "    public TestClass addPolicy(HttpPipelinePolicy pipelinePolicy) {\n" +
+                "        return null;\n" +
+                "    }\n" +
+                "\n" +
+                "    @Override\n" +
+                "    public TestClass retryOptions(RetryOptions retryOptions) {\n" +
+                "        return null;\n" +
+                "    }\n" +
+                "\n" +
+                "    @Override\n" +
+                "    public TestClass httpLogOptions(HttpLogOptions logOptions) {\n" +
+                "        return null;\n" +
+                "    }\n" +
+                "\n" +
+                "    @Override\n" +
+                "    public TestClass clientOptions(ClientOptions clientOptions) {\n" +
+                "        return null;\n" +
+                "    }\n" +
+                "}\n";
+
+        @Language("java") String after = "import com.azure.core.client.traits.HttpTrait;\n" +
+                "import com.azure.core.http.HttpClient;\n" +
+                "import com.azure.core.http.HttpPipeline;\n" +
+                "import com.azure.core.http.policy.HttpLogOptions;\n" +
+                "import com.azure.core.http.policy.HttpPipelinePolicy;\n" +
+                "import com.azure.core.http.policy.RetryOptions;\n" +
+                "import com.azure.core.util.ClientOptions;\n" +
+                "\n" +
+                "public class TestClass implements HttpTrait<TestClass> {\n" +
+                "\n" +
+                "    @Override\n" +
+                "    public TestClass httpClient(HttpClient httpClient) {\n" +
+                "        return null;\n" +
+                "    }\n" +
+                "\n" +
+                "    @Override\n" +
+                "    public TestClass pipeline(HttpPipeline pipeline) {\n" +
+                "        return null;\n" +
+                "    }\n" +
+                "\n" +
+                "    @Override\n" +
+                "    public TestClass addPolicy(HttpPipelinePolicy pipelinePolicy) {\n" +
+                "        return null;\n" +
+                "    }\n" +
+                "\n" +
+                "    @Override\n" +
+                "    public TestClass retryOptions(RetryOptions retryOptions) {\n" +
+                "        return null;\n" +
+                "    }\n" +
+                "\n" +
+                "    @Override\n" +
+                "    public TestClass httpLogOptions(HttpLogOptions logOptions) {\n" +
+                "        return null;\n" +
+                "    }\n" +
+                "\n" +
+                "    @Override\n" +
+                "    public TestClass clientOptions(ClientOptions clientOptions) {\n" +
+                "        return null;\n" +
+                "    }\n" +
+                "\n" +
+                "    public TestClass httpRedirectOptions() {\n" +
+                "        return this;\n" +
+                "    }\n" +
+                "}\n";
+
+        rewriteRun(
+               // spec -> spec.cycles(2)
+                //        .expectedCyclesThatMakeChanges(2),
                 java(before,after)
         );
     }

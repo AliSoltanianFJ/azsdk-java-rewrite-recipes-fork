@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.internal.lang.NonNull;
-import org.openrewrite.internal.lang.Nullable;
 //import org.jetbrains.annotations.NotNull;
 //import org.jetbrains.annotations.Nullable;
 import org.openrewrite.*;
@@ -35,11 +34,11 @@ public class AddMethodDeclaration extends Recipe {
     @NonNull
     String fullyQualifiedClassName;
 
-    @Option(displayName = "Method Name",
+    @Option(displayName = "Method Template",
             description = "A valid name for the method being created.",
             example = "helloWorld")
     @NonNull
-    String methodName;
+    String methodTemplate;
 /*
     @Option(displayName = "Arguments",
             description = "A comma separated list of arguments",
@@ -72,10 +71,10 @@ public class AddMethodDeclaration extends Recipe {
      */
     @JsonCreator
     public AddMethodDeclaration(@NonNull @JsonProperty("fullyQualifiedClassName") String fullyQualifiedClassName,
-                                   @NonNull @JsonProperty("methodName") String methodName) {
+                                   @NonNull @JsonProperty("methodTemplate") String methodTemplate) {
                                    //@Nullable @JsonProperty("methodTemplate") String methodTemplate) {
         this.fullyQualifiedClassName = fullyQualifiedClassName;
-        this.methodName = methodName;
+        this.methodTemplate = methodTemplate;
         //if (methodTemplate != null) { this.methodBodyTemplate = methodTemplate; }
        // else { this.methodBodyTemplate = "{}"; }
 
@@ -104,12 +103,12 @@ public class AddMethodDeclaration extends Recipe {
     public class AddMethodDeclarationVisitor extends JavaIsoVisitor<ExecutionContext> {
 
         private final Pattern pattern = Pattern.compile("\\w+\\((.*)\\)");
-        private final Matcher matcher = pattern.matcher(methodName);
+        private final Matcher matcher = pattern.matcher(AddMethodDeclaration.this.methodTemplate);
         private final String name = matcher.find() ? matcher.group() : null;
 
         MethodMatcher methodMatcher = new MethodMatcher(fullyQualifiedClassName + " " + name);
 
-        private final JavaTemplate methodTemplate = JavaTemplate.builder(methodName).build();
+        private final JavaTemplate methodTemplate = JavaTemplate.builder(AddMethodDeclaration.this.methodTemplate).build();
 
         @Override
         public J.@NonNull ClassDeclaration visitClassDeclaration(J.@NonNull ClassDeclaration classDeclaration, @NonNull ExecutionContext executionContext) {
@@ -130,8 +129,9 @@ public class AddMethodDeclaration extends Recipe {
                 //Add Method to end of method body
                 try {
                     return cd.withBody(methodTemplate.apply(new Cursor(getCursor(),cd.getBody()),
-                            cd.getBody().getCoordinates().lastStatement()));
+                            cd.getBody().getCoordinates().lastStatement(),fullyQualifiedClassName ));
                 } catch (Exception e) {
+                    System.out.println(e.getMessage());
                     return cd;
                 }
 

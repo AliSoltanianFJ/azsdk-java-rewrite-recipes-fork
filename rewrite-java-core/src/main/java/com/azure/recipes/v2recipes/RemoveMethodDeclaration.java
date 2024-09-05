@@ -79,6 +79,7 @@ public class RemoveMethodDeclaration extends Recipe {
                             }
                             return statement;
                         }
+
                 )));
                 return cd;
             }

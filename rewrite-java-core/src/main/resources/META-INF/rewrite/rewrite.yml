@@ -128,29 +128,36 @@ recipeList:
   # to io.clientcore.core.models.traits.HttpTrait
   # TODO: Maybe, filter for implementing classes ??
   # Update method names
-  - org.openrewrite.java.ChangeMethodName:
-      methodPattern: com.azure.core.client.traits.HttpTrait retryOptions(..)
-      newMethodName: httpRetryOptions
-      matchOverrides: true
-  - org.openrewrite.java.ChangeMethodName:
-      methodPattern: com.azure.core.client.traits.HttpTrait pipeline(..)
-      newMethodName: httpPipeline
-      matchOverrides: true
-  - org.openrewrite.java.ChangeMethodName:
-      methodPattern: com.azure.core.client.traits.HttpTrait addPolicy(..)
-      newMethodName: addHttpPipelinePolicy
-      matchOverrides: true
+ # - org.openrewrite.java.ChangeMethodName:
+  #    methodPattern: com.azure.core.client.traits.HttpTrait retryOptions(..)
+  #    newMethodName: httpRetryOptions
+ #     matchOverrides: true
+ # - org.openrewrite.java.ChangeMethodName:
+ #     methodPattern: com.azure.core.client.traits.HttpTrait pipeline(..)
+ #     newMethodName: httpPipeline
+ #     matchOverrides: true
+ # - org.openrewrite.java.ChangeMethodName:
+ #     methodPattern: com.azure.core.client.traits.HttpTrait addPolicy(..)
+ #     newMethodName: addHttpPipelinePolicy
+ #     matchOverrides: true
   # Remove any calls to clientOptions
-  - com.azure.recipes.v2recipes.RemoveMethodCall:
-      methodPattern: com.azure.core.client.traits.HttpTrait clientOptions(..)
+ # - com.azure.recipes.v2recipes.RemoveMethodCall:
+ #     methodPattern: com.azure.core.client.traits.HttpTrait clientOptions(..)
   # Remove clientOptions declarations
-  - com.azure.recipes.v2recipes.RemoveMethodDeclaration:
-      methodPattern: com.azure.core.client.traits.HttpTrait clientOptions(..)
-      matchOverrides: true
-  # WARNING: These method removal recipes don't check for semantic safety.
-  # TODO: Add method httpRedirectOptions and HttpRedirectOptions variable
+ # - com.azure.recipes.v2recipes.RemoveMethodDeclaration:
+ #     methodPattern: com.azure.core.client.traits.HttpTrait clientOptions(..)
+ #     matchOverrides: true
+# WARNING: These method removal recipes don't check for semantic safety.
+
   # TODO: Change types for required parameters
   # TODO: Update interface
+ # TODO: Must change interface type before running this recipe
+  - com.azure.recipes.v2recipes.AddMissingMethod:
+      fullyQualifiedClassName: com.azure.core.client.traits.HttpTrait
+      methodPattern: "*..* httpRedirectOptions(..)"
+      methodTemplate: "public void httpRedirectOptions() {
+          return this;
+      }"
   # End HttpTrait recipes
   # Recipe to change com.azure.core.credential package name to io.clientcore.core.credential
   - org.openrewrite.java.ChangePackage:
