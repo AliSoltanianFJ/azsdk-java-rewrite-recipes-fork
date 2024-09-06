@@ -2,12 +2,12 @@ package com.azure.recipes.v2recipes;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.internal.lang.NonNull;
-//import org.jetbrains.annotations.NotNull;
-//import org.jetbrains.annotations.Nullable;
 import org.openrewrite.*;
+import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.MethodMatcher;
@@ -39,31 +39,13 @@ public class AddMethodDeclaration extends Recipe {
             example = "helloWorld")
     @NonNull
     String methodTemplate;
-/*
-    @Option(displayName = "Arguments",
-            description = "A comma separated list of arguments",
-            example = "String string, Integer integer",
+
+    @Option(displayName = "Method Pattern",
+            description = "A method pattern for matching required method definition.",
+            example = "*..* hello(..)",
             required = false)
-    String arguments;
-
-    @Option(displayName = "ReturnType",
-            description = "A comma separated list of arguments",
-            example = "String string, Integer integer",
-            required = false))
-
-    @Option(displayName = "Access Modifier",
-            description = "Add an access modifier",
-            example = "private",
-            required = false)
-    String accessModifier;
-
-    @Option(displayName = "Method Body Template",
-            description = "A template for the body of the method.",
-            example = "{ return \\\"Hello from #{}!\\\"; }",
-            required = false)
-    String methodBodyTemplate;
-
-*/
+            @NonNull
+    String methodPattern;
 
     /**
      * All recipes must be serializable. This is verified by RewriteTest.rewriteRun() in your tests.
@@ -71,13 +53,12 @@ public class AddMethodDeclaration extends Recipe {
      */
     @JsonCreator
     public AddMethodDeclaration(@NonNull @JsonProperty("fullyQualifiedClassName") String fullyQualifiedClassName,
-                                   @NonNull @JsonProperty("methodTemplate") String methodTemplate) {
-                                   //@Nullable @JsonProperty("methodTemplate") String methodTemplate) {
+                                @NonNull @JsonProperty("methodTemplate") String methodTemplate,
+                                @NonNull @JsonProperty("methodPattern") String methodPattern) {
+
         this.fullyQualifiedClassName = fullyQualifiedClassName;
         this.methodTemplate = methodTemplate;
-        //if (methodTemplate != null) { this.methodBodyTemplate = methodTemplate; }
-       // else { this.methodBodyTemplate = "{}"; }
-
+        this.methodPattern = methodPattern;
     }
 
     @Override
@@ -87,28 +68,28 @@ public class AddMethodDeclaration extends Recipe {
 
     @Override
     public @NlsRewrite.Description @NonNull String getDescription() {
-        return "Adds a method declaration to the target class.";
+        return "Adds a new method declaration to the target class using a java template.";
     }
 
     /**
-     * Visitor method
+     * Outer visitor method that returns the specific visitors specified
+     * by the recipe.
+     *
+     * @return TreeVisitor
      */
-
     @Override
     public @NonNull TreeVisitor<?, ExecutionContext> getVisitor() {
 
-        return new AddMethodDeclarationVisitor();
+        return new AddMethodDeclarationVisitor(new MethodMatcher(methodPattern),
+                JavaTemplate.builder(AddMethodDeclaration.this.methodTemplate).build());
     }
 
+    @AllArgsConstructor
     public class AddMethodDeclarationVisitor extends JavaIsoVisitor<ExecutionContext> {
 
-        private final Pattern pattern = Pattern.compile("\\w+\\((.*)\\)");
-        private final Matcher matcher = pattern.matcher(AddMethodDeclaration.this.methodTemplate);
-        private final String name = matcher.find() ? matcher.group() : null;
+        private final MethodMatcher methodMatcher;
 
-        MethodMatcher methodMatcher = new MethodMatcher(fullyQualifiedClassName + " " + name);
-
-        private final JavaTemplate methodTemplate = JavaTemplate.builder(AddMethodDeclaration.this.methodTemplate).build();
+        private final JavaTemplate methodTemplate;
 
         @Override
         public J.@NonNull ClassDeclaration visitClassDeclaration(J.@NonNull ClassDeclaration classDeclaration, @NonNull ExecutionContext executionContext) {

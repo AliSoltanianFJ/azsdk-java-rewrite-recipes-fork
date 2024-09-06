@@ -13,8 +13,9 @@ import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.tree.*;
 
 /**
- * Recipe to find and delete a method Declaration.
- * ONLY deletes method declarations.
+ * Recipe to find and delete a method Declaration, by visiting and altering the
+ * declaring class.
+ * ONLY deletes method declarations, does not remove any calls to the method.
  * @author Annabelle Mittendorf Smith
  */
 
@@ -57,7 +58,8 @@ public class RemoveMethodDeclaration extends Recipe {
     }
 
     /**
-     * getVisitor
+     * Outer visitor method that returns the specific visitors specified
+     * by the recipe.
      *
      * @return TreeVisitor
      */
@@ -67,9 +69,21 @@ public class RemoveMethodDeclaration extends Recipe {
 
         return new JavaIsoVisitor<ExecutionContext>() {
 
+            /*
+            It seems like there are many ways to achieve the same outcomes, I'm still unsure on the best way.
+            A method declaration visitor could also just return null on a positive match. Would probably be faster.
+            This recipe doesn't require overriding the not null requirements of the visitor methods.
+             */
+            // Visits class declarations and checks/updates their statements.
             @Override
             public J.@NonNull ClassDeclaration visitClassDeclaration(J.@NonNull ClassDeclaration classDeclaration, @NonNull ExecutionContext executionContext) {
                 J.ClassDeclaration cd = super.visitClassDeclaration(classDeclaration, executionContext);
+
+                // Return immediately if empty class.
+                if (cd.getType() == null) return cd;
+
+                if(cd.getBody().getStatements().isEmpty()) return cd;
+
                 cd = cd.withBody(cd.getBody().withStatements(ListUtils.map(
                         cd.getBody().getStatements(), statement -> {
                             if (statement instanceof J.MethodDeclaration) {

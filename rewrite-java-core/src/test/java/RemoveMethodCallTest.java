@@ -41,19 +41,19 @@ public class RemoveMethodCallTest implements RewriteTest {
     }
 
     /**
-     * Test method: asserts that call to void method is removed.
+     * Test method: asserts that call in declaring class removed.
      */
     @Test
-    void testRemoveMethodCall_void() {
+    void testRemoveMethodCall_internal() {
         @Language("java")String before = "package com.boo;\n" +
                 "public class MyClass {\n" +
-                "    public void myMethod() {}\n" +
+                "    private void myMethod() {}\n" +
                 "    public void myMethodOutside() { myMethod(); }\n" +
                 "}\n";
 
         @Language("java")String after = "package com.boo;\n" +
                 "public class MyClass {\n" +
-                "    public void myMethod() {}\n" +
+                "    private void myMethod() {}\n" +
                 "    public void myMethodOutside() { }\n" +
                 "}\n";
 
@@ -61,30 +61,30 @@ public class RemoveMethodCallTest implements RewriteTest {
     }
 
     /**
-     * Test method: asserts that method call is removed, where return is unused.
+     * Test method: asserts that internal static method call removed.
      */
     @Test
-    void testRemoveMethodCall_unusedReturnInt() {
+    void testRemoveMethodCall_internalStatic() {
         @Language("java")String before = "package com.boo;\n" +
                 "public class MyClass {\n" +
-                "    public int myMethod() { return 1; }\n" +
-                "    public void myMethodOutside() { myMethod(); }\n" +
+                "    public static int myMethod() { return 1; }\n" +
+                "    public static void myMethodOutside() { int a = MyClass.myMethod(); }\n" +
                 "}\n";
         /* comment */
         @Language("java")String after = "package com.boo;\n" +
                 "public class MyClass {\n" +
-                "    public int myMethod() { return 1; }\n" +
-                "    public void myMethodOutside() { }\n" +
+                "    public static int myMethod() { return 1; }\n" +
+                "    public static void myMethodOutside() { int a; }\n" +
                 "}\n";
         rewriteRun(java(before, after));
     }
 
     /**
-     * Test method: asserts that method call is removed, where used
-     * by a variable declaration.
+     * Test method: asserts that instantiated method call is removed,
+     * where used at variable declaration.
      */
     @Test
-    void testRemoveMethodCall_atVarDeclaration() {
+    void testRemoveMethodCall_instance() {
         @Language("java")String before = "package com.boo;\n" +
                 "public class MyClass {\n" +
                 "    public MyClass() { }" +
@@ -107,12 +107,13 @@ public class RemoveMethodCallTest implements RewriteTest {
                 "}\n" ;
         rewriteRun(java(before, after));
     }
+
     /**
      * Test method: asserts that method call is removed, where used
-     * by a variable assignment.
+     * at variable assignment.
      */
     @Test
-    void testRemoveMethodCall_atVarAssignment() {
+    void testRemoveMethodCall_asVarAssignment() {
         @Language("java")String before = "package com.boo;\n" +
                 "public class MyClass {\n" +
                 "    public MyClass() { }" +
@@ -138,6 +139,84 @@ public class RemoveMethodCallTest implements RewriteTest {
         rewriteRun(java(before, after));
     }
 
+    /**
+     * Test method: asserts static method call removed in external class.
+     */
+    @Test
+    void testRemoveMethodCall_staticInstance() {
+        @Language("java")String before = "package com.boo;\n" +
+                "public class MyClass {\n" +
+                "    public static int myMethod() { return 1; }\n" +
+                "}\n"  +
+                "public class MyClass2 {\n" +
+                "    public void myMethodOutside() { int a = MyClass.myMethod(); }\n" +
+                "}\n" ;
 
+
+        @Language("java")String after = "package com.boo;\n" +
+                "public class MyClass {\n" +
+                "    public static int myMethod() { return 1; }\n" +
+                "}\n"  +
+                "public class MyClass2 {\n" +
+                "    public void myMethodOutside() { int a; }\n" +
+                "}\n" ;
+        rewriteRun(java(before, after));
+    }
+
+    /**
+     * Test method: asserts that method call is removed,
+     * where used in child class.
+     */
+    @Test
+    void testRemoveMethodCall_inherited() {
+        @Language("java")String before = "package com.boo;\n" +
+                "public class MyClass {\n" +
+                "    public MyClass() { }" +
+                "    public int myMethod() { return 1; }\n" +
+                "}\n"  +
+                "public class MyClass2 extends MyClass {\n" +
+                "    public void myMethodOutside() { int a = super.myMethod(); }\n" +
+                "}\n" ;
+
+
+        @Language("java")String after = "package com.boo;\n" +
+                "public class MyClass {\n" +
+                "    public MyClass() { }" +
+                "    public int myMethod() { return 1; }\n" +
+                "}\n"  +
+                "public class MyClass2 extends MyClass {\n" +
+                "    public void myMethodOutside() { int a; }\n" +
+                "}\n" ;
+        rewriteRun(java(before, after));
+    }
+
+    /**
+     * Test method: asserts that method call is removed,
+     * where it is an interface method.
+     */
+    @Test
+    void testRemoveMethodCall_interface() {
+        @Language("java")String before = "package com.boo;\n" +
+                "public interface MyClass {\n" +
+                "    int myMethod();\n" +
+                "}\n"  +
+                "public class MyClass2 implements MyClass {\n" +
+                "    @Override" +
+                "    public int myMethod() { return 1; }\n" +
+                "    public void myMethodOutside() { int a = myMethod(); }\n" +
+                "}\n" ;
+
+
+        @Language("java")String after = "package com.boo;\n" +
+                "public interface MyClass {\n"+
+                "    int myMethod();\n" +
+                "}\n"  +
+                "public class MyClass2 implements MyClass {\n" +
+                "    @Override" +
+                "    public int myMethod() { return 1; }\n" +
+                "    public void myMethodOutside() { int a; }\n" +
+                "}\n" ;
+        rewriteRun(java(before, after));
+    }
 
 }

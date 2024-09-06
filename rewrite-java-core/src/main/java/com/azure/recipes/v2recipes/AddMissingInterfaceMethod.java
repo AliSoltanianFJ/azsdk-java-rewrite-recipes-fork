@@ -6,22 +6,17 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.jetbrains.annotations.NotNull;
 import org.openrewrite.*;
-import org.openrewrite.internal.ListUtils;
 import org.openrewrite.internal.lang.NonNull;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.MethodMatcher;
-import org.openrewrite.java.TreeVisitingPrinter;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.*;
-
-import java.util.Arrays;
-import java.util.List;
 
 
 @Value
 @EqualsAndHashCode(callSuper = false)
-public class AddMissingMethod extends Recipe {
+public class AddMissingInterfaceMethod extends Recipe {
 
     @Option(displayName = "Fully Qualified Class Name",
             description = "A fully qualified class being implemented with missing method.",
@@ -43,9 +38,9 @@ public class AddMissingMethod extends Recipe {
      * Json creator allows your recipes to be used from a yaml file.
      */
     @JsonCreator
-    public AddMissingMethod(@NonNull @JsonProperty("fullyQualifiedClassName") String fullyQualifiedClassName,
-                                @NonNull @JsonProperty("methodPattern") String methodPattern,
-                                @NonNull @JsonProperty("methodTemplate") String methodTemplate) {
+    public AddMissingInterfaceMethod(@NonNull @JsonProperty("fullyQualifiedClassName") String fullyQualifiedClassName,
+                                     @NonNull @JsonProperty("methodPattern") String methodPattern,
+                                     @NonNull @JsonProperty("methodTemplate") String methodTemplate) {
         this.fullyQualifiedClassName = fullyQualifiedClassName;
         this.methodPattern = methodPattern;
         this.methodTemplateString = methodTemplate;
@@ -53,28 +48,40 @@ public class AddMissingMethod extends Recipe {
 
     @Override
     public @NlsRewrite.DisplayName @NotNull String getDisplayName() {
-        return "Add Missing Methods";
+        return "Add Missing Interface Method";
     }
 
     @Override
     public @NlsRewrite.Description @NotNull String getDescription() {
-        return "Add a missing method from the declared interface.";
+        return "Add a the missing method to classes implementing the declared interface.";
     }
 
     @Override
-    public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new UsesType<>(fullyQualifiedClassName, true), new ImplementationVisitor());
+    public @NotNull TreeVisitor<?, ExecutionContext> getVisitor() {
+        // A pre-check using a search recipe
+        return Preconditions.check(new UsesType<>(fullyQualifiedClassName, true),
+                new AddMethodToImplementationVisitor());
     }
 
-    public class ImplementationVisitor extends JavaIsoVisitor<ExecutionContext> {
-
+    public class AddMethodToImplementationVisitor extends JavaIsoVisitor<ExecutionContext> {
 
         private final MethodMatcher methodMatcher = new MethodMatcher(methodPattern, true);
 
         @Override
-        public J.ClassDeclaration visitClassDeclaration(J.ClassDeclaration classDeclaration, ExecutionContext ctx) {
+        public J.@NotNull ClassDeclaration visitClassDeclaration(J.@NotNull ClassDeclaration classDeclaration, ExecutionContext ctx) {
             J.ClassDeclaration cd = super.visitClassDeclaration(classDeclaration,ctx);
 
+
+            /*
+            public enum Kind { //implements J
+                Class,
+                Enum,
+                Interface,
+                Annotation,
+                Record,
+                Value
+            }
+             */
             // Only modify concrete classes.
             if (cd.hasModifier(J.Modifier.Type.Abstract) || cd.getKind() == J.ClassDeclaration.Kind.Type.Interface) {
                 return cd;
@@ -85,11 +92,18 @@ public class AddMissingMethod extends Recipe {
             //if (!cd.getType().isAssignableTo(fullyQualifiedClassName)) {
                 return cd;
             }
-            // TODO change to get interface params
-           // String mt2 = methodTemplateString.replace("<T>", cd.getType().getFullyQualifiedName());
-            //System.out.println(mt2);
+
+            // Build the method template
             JavaTemplate methodTemplate = JavaTemplate.builder(methodTemplateString).build();
-            // Don't modify if method already exists.
+
+             /*
+            Here I ran into too many difficulties casting the return type dynamically from the method
+            template.
+            I also had difficulty filtering out parameters of the interface.
+            I also had difficulty with testing while the altered class is 'between' interfaces.
+             */
+
+            // Don't modify if matching method already exists.
             J.ClassDeclaration finalCd = cd;
             if (cd.getBody().getStatements().stream()
                     .filter(statement -> statement instanceof J.MethodDeclaration)
@@ -98,16 +112,19 @@ public class AddMissingMethod extends Recipe {
                 return cd;
             }
 
+            // String param = (J.ParameterizedType)cd.getImplements().get(0)).getTypeParameters().get(0).toString();
+            //System.out.println((param);
+            // Maybe try filtered for matches:
+            //JavaType maybeReturn = cd.getType().getInterfaces().get(0).getMethods().get(0).getReturnType();
+
             // Finally add method at the end of the class and return
-            //System.out.println(((J.ParameterizedType)cd.getImplements().get(0)).getTypeParameters().get(0).toString());
             cd = cd.withBody(methodTemplate.apply(
                     new Cursor(getCursor(), cd.getBody()),
                     cd.getBody().getCoordinates().lastStatement()));
+                    // add the relevant substitution value to apply
 
-                    //cd.getType()));
-            //TODO: change so targets interface params
-            //maybeAddImport("io.clientcore.core.http.models.HttpRedirectOptions");
-            //System.out.println(TreeVisitingPrinter.printTree(getCursor()));
+            // Maybe add or remove imports
+
             return cd;
         }
     }
