@@ -1,4 +1,5 @@
 import org.intellij.lang.annotations.Language;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
@@ -125,6 +126,7 @@ public class HttpTraitTest implements RewriteTest {
      * Test deletion of target method declaration ONLY.
      */
 
+    @Disabled
     @Test
     void testMethodDeclarationDeleted() {
         @Language("java") String before = "import com.azure.core.client.traits.HttpTrait;\n" +
@@ -150,6 +152,7 @@ public class HttpTraitTest implements RewriteTest {
         );
     }
 
+    @Disabled
     @Test
     void testMissingMethodAdded() {
         @Language("java") String before = "import com.azure.core.client.traits.HttpTrait;\n" +
