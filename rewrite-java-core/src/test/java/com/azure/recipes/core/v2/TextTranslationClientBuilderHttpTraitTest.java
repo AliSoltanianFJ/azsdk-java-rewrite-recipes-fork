@@ -1,6 +1,7 @@
 package com.azure.recipes.core.v2;
 
 import org.intellij.lang.annotations.Language;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
@@ -130,6 +131,7 @@ public class TextTranslationClientBuilderHttpTraitTest implements RewriteTest {
     }
 
 
+    @Disabled("Disabled when running the Coverage tests to avoid dependency conflict")
     @Test
     void test_likeSampleImplementation_changed() {
         @Language("java") String before = "import com.azure.ai.translation.text.TextTranslationClient;\n" +

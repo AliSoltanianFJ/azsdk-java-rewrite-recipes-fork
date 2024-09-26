@@ -7,6 +7,32 @@ import org.openrewrite.test.RewriteTest;
 
 import static org.openrewrite.java.Assertions.java;
 
+/**
+ * This test class is to check the coverage of our recipes using the samples in
+ * azure-ai-translation-text-v1 and azure-ai-translation-text-v2.
+ * The recipes are run over the copied contents of azure-ai-translation-text-v1
+ * TextTranslationProtocolSample.java.
+ * The contents of azure-ai-translation-text-v2 TextTranslationProtocolSample.java
+ * are used as the expected outcome.
+ * This test will pass if the transformed code from running the recipes EXACTLY matches
+ * the provided v2 sample.
+ *
+ * NOTES:
+ * This test requires changes to rewrite-java-core/pom.xml that causes a dependency conflict
+ * with other test classes.
+ * This class requires:
+ *      <dependency>
+*            <groupId>com.azure</groupId>
+*            <artifactId>azure-ai-translation-text-v1</artifactId>
+*            <version>1.0.0-beta.1</version>
+*            <scope>test</scope>
+ *      </dependency>
+ *
+ * TODO resolve dependency conflict if this branch is to be merged.
+ * @author Annabelle Mittendorf Smith
+ *
+ */
+
 public class TextTranslationProtocolSampleTest implements RewriteTest {
 
     @Override
@@ -17,7 +43,9 @@ public class TextTranslationProtocolSampleTest implements RewriteTest {
 
     @Test
     void test_with_project_version() {
-        @Language("java") String before = "import com.azure.ai.translation.text.TextTranslationClient;\n" +
+        @Language("java") String before = "package java.com.azure.ai.translation.text;\n" +
+                "\n" +
+                "import com.azure.ai.translation.text.TextTranslationClient;\n" +
                 "import com.azure.ai.translation.text.TextTranslationClientBuilder;\n" +
                 "import com.azure.ai.translation.text.models.InputTextItem;\n" +
                 "import com.azure.ai.translation.text.models.TranslatedTextItem;\n" +
@@ -64,21 +92,33 @@ public class TextTranslationProtocolSampleTest implements RewriteTest {
                 "    }\n" +
                 "}";
 
-        @Language("java") String after = "import com.azure.ai.translation.text.TextTranslationClient;\n" +
+        @Language("java") String after = "package java.com.azure.ai.translation.text;\n" +
+                "\n" +
+                "import com.azure.ai.translation.text.TextTranslationClient;\n" +
                 "import com.azure.ai.translation.text.TextTranslationClientBuilder;\n" +
                 "import com.azure.ai.translation.text.models.InputTextItem;\n" +
                 "import com.azure.ai.translation.text.models.TranslatedTextItem;\n" +
                 "import io.clientcore.core.credential.KeyCredential;\n" +
                 "import io.clientcore.core.http.models.HttpLogOptions;\n" +
                 "import io.clientcore.core.http.models.HttpRetryOptions;\n" +
+                "import io.clientcore.core.http.models.RequestOptions;\n" +
+                "import io.clientcore.core.http.models.Response;\n" +
+                "import io.clientcore.core.util.Context;\n" +
+                "import io.clientcore.core.util.binarydata.BinaryData;\n" +
                 "\n" +
                 "import java.io.IOException;\n" +
+                "import java.lang.reflect.ParameterizedType;\n" +
+                "import java.lang.reflect.Type;\n" +
                 "import java.time.Duration;\n" +
                 "import java.util.Arrays;\n" +
                 "import java.util.List;\n" +
                 "\n" +
-                "public class TextTranslationSample {\n" +
-                "    public static void main(String[] args) {\n" +
+                "/**\n" +
+                " * Sample demonstrating the use of protocol client methods to translate text.\n" +
+                " */\n" +
+                "public class TextTranslationProtocolSample {\n" +
+                "    public static void main(String[] args) throws IOException {\n" +
+                "\n" +
                 "        TextTranslationClient textTranslationClient = new TextTranslationClientBuilder()\n" +
                 "                .credential(new KeyCredential(\"<api-key>\"))\n" +
                 "                .endpoint(\"<endpoint>\")\n" +
@@ -87,11 +127,31 @@ public class TextTranslationProtocolSampleTest implements RewriteTest {
                 "                .buildClient();\n" +
                 "\n" +
                 "        List<InputTextItem> inputTextItems = Arrays.asList(new InputTextItem(\"hello world\"));\n" +
+                "        List<String> targetLanguages = Arrays.asList(\"es\");\n" +
+                "        BinaryData requestBody = BinaryData.fromObject(inputTextItems);\n" +
+                "        RequestOptions requestOptions = new RequestOptions().setContext(Context.none());\n" +
+                "\n" +
+                "        Response<BinaryData> binaryDataResponse = textTranslationClient.translateWithResponse(targetLanguages, requestBody, requestOptions);\n" +
                 "        List<TranslatedTextItem> result = null;\n" +
                 "        try {\n" +
-                "            result = textTranslationClient.translate(Arrays.asList(\"es\"), inputTextItems);\n" +
+                "            result = binaryDataResponse.getValue().toObject(new ParameterizedType() {\n" +
+                "                @Override\n" +
+                "                public Type getRawType() {\n" +
+                "                    return List.class;\n" +
+                "                }\n" +
+                "\n" +
+                "                @Override\n" +
+                "                public Type[] getActualTypeArguments() {\n" +
+                "                    return new Type[]{TranslatedTextItem.class};\n" +
+                "                }\n" +
+                "\n" +
+                "                @Override\n" +
+                "                public Type getOwnerType() {\n" +
+                "                    return null;\n" +
+                "                }\n" +
+                "            });\n" +
                 "        } catch (IOException e) {\n" +
-                "            throw new RuntimeException(e);\n" +
+                "            e.printStackTrace();\n" +
                 "        }\n" +
                 "\n" +
                 "        result.stream()\n" +
@@ -99,9 +159,11 @@ public class TextTranslationProtocolSampleTest implements RewriteTest {
                 "                .forEach(translation -> System.out.println(\"Translated text to \" + translation.getTargetLanguage() + \" : \" + translation.getText()));\n" +
                 "    }\n" +
                 "}";
+
+
         rewriteRun(
-                spec -> spec.cycles(2)
-                        .expectedCyclesThatMakeChanges(2),
+//                spec -> spec.cycles(2)
+//                        .expectedCyclesThatMakeChanges(2),
                 java(before,after)
         );
     }

@@ -102,6 +102,7 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Recipe unit tests use the released version when using Builder apis -->
         <!--
                 <dependency>
                     <groupId>com.azure</groupId>
@@ -110,7 +111,7 @@
                     <scope>test</scope>
                 </dependency>
         -->
-                <!-- Alternatively, use this project version -->
+                <!-- Alternatively, coverage tests for samples use this in project version  -->
 
                 <dependency>
                     <groupId>com.azure</groupId>

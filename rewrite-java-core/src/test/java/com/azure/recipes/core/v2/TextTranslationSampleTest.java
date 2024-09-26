@@ -7,6 +7,33 @@ import org.openrewrite.test.RewriteTest;
 
 import static org.openrewrite.java.Assertions.java;
 
+/**
+ * This test class is to check the coverage of our recipes using the samples in
+ * azure-ai-translation-text-v1 and azure-ai-translation-text-v2.
+ * The recipes are run over the copied contents of azure-ai-translation-text-v1
+ * TextTranslationSample.java.
+ * The contents of azure-ai-translation-text-v2 TextTranslationSample.java
+ * are used as the expected outcome.
+ * This test will pass if the transformed code from running the recipes EXACTLY matches
+ * the provided v2 sample.
+ *
+ * NOTES:
+ * To ensure these tests are accurate, update via pull from remote main before running.
+ * This test requires changes to rewrite-java-core/pom.xml that causes a dependency conflict
+ * with other test classes.
+ * This class requires:
+ *      <dependency>
+ *            <groupId>com.azure</groupId>
+ *            <artifactId>azure-ai-translation-text-v1</artifactId>
+ *            <version>1.0.0-beta.1</version>
+ *            <scope>test</scope>
+ *      </dependency>
+ *
+ * TODO resolve dependency conflict if this branch is to be merged.
+ * @author Annabelle Mittendorf Smith
+ *
+ */
+
 public class TextTranslationSampleTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
@@ -16,7 +43,9 @@ public class TextTranslationSampleTest implements RewriteTest {
 
     @Test
     void test() {
-        @Language("java") String before = "import com.azure.ai.translation.text.TextTranslationClient;\n" +
+        @Language("java") String before = "package java.com.azure.ai.translation.text;\n" +
+                "\n" +
+                "import com.azure.ai.translation.text.TextTranslationClient;\n" +
                 "import com.azure.ai.translation.text.TextTranslationClientBuilder;\n" +
                 "import com.azure.ai.translation.text.models.InputTextItem;\n" +
                 "import com.azure.ai.translation.text.models.TranslatedTextItem;\n" +
@@ -49,7 +78,9 @@ public class TextTranslationSampleTest implements RewriteTest {
                 "    }\n" +
                 "}";
 
-        @Language("java") String after = "import com.azure.ai.translation.text.TextTranslationClient;\n" +
+        @Language("java") String after = "package java.com.azure.ai.translation.text;\n" +
+                "\n" +
+                "import com.azure.ai.translation.text.TextTranslationClient;\n" +
                 "import com.azure.ai.translation.text.TextTranslationClientBuilder;\n" +
                 "import com.azure.ai.translation.text.models.InputTextItem;\n" +
                 "import com.azure.ai.translation.text.models.TranslatedTextItem;\n" +
@@ -63,6 +94,7 @@ public class TextTranslationSampleTest implements RewriteTest {
                 "import java.util.List;\n" +
                 "\n" +
                 "public class TextTranslationSample {\n" +
+                "\n" +
                 "    public static void main(String[] args) {\n" +
                 "        TextTranslationClient textTranslationClient = new TextTranslationClientBuilder()\n" +
                 "                .credential(new KeyCredential(\"<api-key>\"))\n" +
@@ -85,6 +117,7 @@ public class TextTranslationSampleTest implements RewriteTest {
                 "    }\n" +
                 "}";
         rewriteRun(
+
 //                spec -> spec.cycles(2)
 //                        .expectedCyclesThatMakeChanges(2),
                 java(before,after)
