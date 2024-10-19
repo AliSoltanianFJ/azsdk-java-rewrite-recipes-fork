@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RetryOptionsConstructorRecipe.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rewrite-java-core</a> &gt; <a href="index.source.html" class="el_package">com.azure.recipes.core.v2</a> &gt; <span class="el_source">RetryOptionsConstructorRecipe.java</span></div><h1>RetryOptionsConstructorRecipe.java</h1><pre class="source lang-java linenums">package com.azure.recipes.core.v2;
+
+import org.jetbrains.annotations.NotNull;
+import org.openrewrite.ExecutionContext;
+import org.openrewrite.Recipe;
+import org.openrewrite.TreeVisitor;
+import org.openrewrite.java.JavaIsoVisitor;
+import org.openrewrite.java.tree.Expression;
+import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.TypeTree;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+/**
+ * RetryOptionsRecipe changes RetryOptions constructor to HttpRetryOptions constructor.
+ * It also removes any references to FixedDelay and ExponentialDelay and changes
+ * com.azure.core.http.policy.RetryOptions to io.clientcore.core.http.models.HttpRetryOptions
+ * --------------------------------------------------
+ * Before applying this recipe:
+ * import com.azure.core.http.policy.RetryOptions;
+ * ...
+ * new RetryOptions(new FixedDelayOptions(3, Duration.ofMillis(50)))
+ * --------------------------------------------------
+ * After applying this recipe:
+ * import io.clientcore.core.http.models.HttpRetryOptions;
+ * ...
+ * new HttpRetryOptions(3, Duration.ofMillis(50))
+ * --------------------------------------------------
+ * @author Ali Soltanian Fard Jahromi
+ */
+<span class="fc" id="L33">public class RetryOptionsConstructorRecipe extends Recipe {</span>
+    /**
+     * Method to return a simple short description of RetryOptionsRecipe
+     * @return A simple short description/name of the recipe
+     */
+    @Override
+    public @NotNull String getDisplayName() {
+<span class="fc" id="L40">        return &quot;Change RetryOptions constructor&quot;;</span>
+    }
+    /**
+     * Method to return a description of RetryOptionsRecipe
+     * @return A short description of the recipe
+     */
+    @Override
+    public @NotNull String getDescription() {
+<span class="fc" id="L48">        return &quot;This recipe changes the constructor for RetryOptions to HttpRetryOptions.\n&quot; +</span>
+                &quot;This includes removing any references to FixedDelay and ExponentialDelay and changing\n&quot; +
+                &quot; * com.azure.core.http.policy.RetryOptions to io.clientcore.core.http.models.HttpRetryOptions.&quot;;
+    }
+    /**
+     * Method to return the visitor that changes RetryOptions constructor to HttpRetryOptions constructor
+     * @return A TreeVisitor to change RetryOptions constructor to HttpRetryOptions constructor
+     */
+    @Override
+    public @NotNull TreeVisitor&lt;?, ExecutionContext&gt; getVisitor() {
+<span class="fc" id="L58">        return new RetryVisitor();</span>
+    }
+    /**
+     * Visitor to change RetryOptions constructor to HttpRetryOptions constructor
+     */
+<span class="fc" id="L63">    private static class RetryVisitor extends JavaIsoVisitor&lt;ExecutionContext&gt; {</span>
+
+<span class="fc" id="L65">        private final Map&lt;String, List&lt;Expression&gt;&gt; variableToArgsMap = new HashMap&lt;&gt;();</span>
+
+        /**
+         * Method to visit variable declaration for FixedDelay or ExponentialDelay
+         */
+        @Override
+        public J.VariableDeclarations visitVariableDeclarations(J.VariableDeclarations variableDeclarations, ExecutionContext executionContext) {
+<span class="fc" id="L72">            J.VariableDeclarations vd = super.visitVariableDeclarations(variableDeclarations, executionContext);</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">            for (J.VariableDeclarations.NamedVariable variable : vd.getVariables()) {</span>
+<span class="fc" id="L74">                J.NewClass newClass = null;</span>
+                try {
+<span class="fc" id="L76">                    newClass = (J.NewClass) variable.getInitializer();</span>
+<span class="fc" id="L77">                } catch (Exception e) {</span>
+<span class="fc" id="L78">                    return vd;</span>
+<span class="fc" id="L79">                }</span>
+<span class="fc bfc" id="L80" title="All 2 branches covered.">                if (newClass != null) {</span>
+<span class="pc bpc" id="L81" title="1 of 2 branches missed.">                    if (newClass.getType() != null) {</span>
+<span class="fc" id="L82">                        String className = newClass.getType().toString();</span>
+<span class="pc bpc" id="L83" title="1 of 4 branches missed.">                        if (className.contains(&quot;FixedDelayOptions&quot;) || className.contains(&quot;ExponentialDelayOptions&quot;)) {</span>
+<span class="fc" id="L84">                            List&lt;Expression&gt; args = new ArrayList&lt;&gt;(newClass.getArguments());</span>
+<span class="fc" id="L85">                            variableToArgsMap.put(variable.getSimpleName(), args);</span>
+                        }
+                    }
+                }
+<span class="fc" id="L89">            }</span>
+<span class="fc" id="L90">            return vd;</span>
+        }
+
+        /**
+         * Method to visit constructor for RetryOptions
+         */
+        @Override
+        public J.NewClass visitNewClass(J.NewClass newClass, ExecutionContext executionContext) {
+<span class="fc" id="L98">            J.NewClass visitedNewClass = super.visitNewClass(newClass, executionContext);</span>
+<span class="fc bfc" id="L99" title="All 2 branches covered.">            if (visitedNewClass.toString().contains(&quot;new HttpRetryOptions&quot;)) {</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">                if (visitedNewClass.getArguments().size() == 1) {</span>
+<span class="fc" id="L101">                    Expression constructorArg = visitedNewClass.getArguments().get(0);</span>
+<span class="fc bfc" id="L102" title="All 2 branches covered.">                    if (constructorArg instanceof J.Identifier) {</span>
+<span class="fc" id="L103">                        String variableName = ((J.Identifier) constructorArg).getSimpleName();</span>
+<span class="fc" id="L104">                        List&lt;Expression&gt; args = variableToArgsMap.get(variableName);</span>
+<span class="pc bpc" id="L105" title="1 of 2 branches missed.">                        if (args != null) {</span>
+<span class="fc" id="L106">                            return visitedNewClass.withArguments(args);</span>
+                        }
+<span class="pc bpc" id="L108" title="1 of 2 branches missed.">                    } else if (constructorArg instanceof J.NewClass) {</span>
+<span class="fc" id="L109">                        J.NewClass newArg = (J.NewClass) constructorArg;</span>
+<span class="fc" id="L110">                        List&lt;Expression&gt; args = new ArrayList&lt;&gt;(newArg.getArguments());</span>
+<span class="fc" id="L111">                        return visitedNewClass.withArguments(args);</span>
+                    }
+                }
+            }
+<span class="fc" id="L115">            return visitedNewClass;</span>
+        }
+
+        /**
+         * Method to change RetryOptions to HttpRetryOptions
+         */
+        @Override
+        public J.@NotNull Identifier visitIdentifier(J.@NotNull Identifier identifier, @NotNull ExecutionContext ctx) {
+<span class="fc" id="L123">            J.Identifier visitedIdentifier = super.visitIdentifier(identifier, ctx);</span>
+<span class="fc bfc" id="L124" title="All 2 branches covered.">            if (visitedIdentifier.getSimpleName().equals(&quot;RetryOptions&quot;)) {</span>
+<span class="fc" id="L125">                return visitedIdentifier.withSimpleName(&quot;HttpRetryOptions&quot;);</span>
+            }
+<span class="fc" id="L127">            return visitedIdentifier;</span>
+        }
+
+        /**
+         * Method to change import to HttpRetryOptions
+         */
+        @Override
+        public J.@NotNull FieldAccess visitFieldAccess(J.@NotNull FieldAccess fieldAccess, @NotNull ExecutionContext ctx) {
+<span class="fc" id="L135">            J.FieldAccess visitedFieldAccess = super.visitFieldAccess(fieldAccess, ctx);</span>
+<span class="fc" id="L136">            String fullyQualified = visitedFieldAccess.getTarget() + &quot;.&quot; + visitedFieldAccess.getSimpleName();</span>
+<span class="fc bfc" id="L137" title="All 2 branches covered.">            if (fullyQualified.equals(&quot;com.azure.core.http.policy.HttpRetryOptions&quot;)) {</span>
+<span class="fc" id="L138">                return TypeTree.build(&quot; io.clientcore.core.http.models.HttpRetryOptions&quot;);</span>
+            }
+<span class="fc" id="L140">            return visitedFieldAccess;</span>
+        }
+
+        /**
+         * Method to change usages of retryOptions builder method to httpRetryOptions
+         */
+        @Override
+        public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, ExecutionContext executionContext) {
+<span class="fc" id="L148">            J.MethodInvocation visitedMethodInv = super.visitMethodInvocation(method, executionContext);</span>
+<span class="pc bpc" id="L149" title="1 of 2 branches missed.">            if (visitedMethodInv.getSimpleName().equals(&quot;retryOptions&quot;)) {</span>
+<span class="nc" id="L150">                return visitedMethodInv.withName(visitedMethodInv.getName().withSimpleName(&quot;httpRetryOptions&quot;));</span>
+            }
+<span class="fc" id="L152">            return visitedMethodInv;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

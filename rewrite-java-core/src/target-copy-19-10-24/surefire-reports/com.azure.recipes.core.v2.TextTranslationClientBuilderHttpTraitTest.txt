@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.azure.recipes.core.v2.TextTranslationClientBuilderHttpTraitTest
+-------------------------------------------------------------------------------
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.731 s -- in com.azure.recipes.core.v2.TextTranslationClientBuilderHttpTraitTest

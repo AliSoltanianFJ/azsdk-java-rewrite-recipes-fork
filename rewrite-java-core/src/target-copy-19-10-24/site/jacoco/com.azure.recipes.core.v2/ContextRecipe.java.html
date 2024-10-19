@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ContextRecipe.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rewrite-java-core</a> &gt; <a href="index.source.html" class="el_package">com.azure.recipes.core.v2</a> &gt; <span class="el_source">ContextRecipe.java</span></div><h1>ContextRecipe.java</h1><pre class="source lang-java linenums">package com.azure.recipes.core.v2;
+
+import org.jetbrains.annotations.NotNull;
+import org.openrewrite.ExecutionContext;
+import org.openrewrite.Recipe;
+import org.openrewrite.TreeVisitor;
+import org.openrewrite.java.JavaIsoVisitor;
+import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.TypeTree;
+
+/**
+ * ContextRecipe changes all instances of Context.NONE (from azure core v1) to Context.none() (from azure core v2).
+ * This recipe also updates the import statements for the aforementioned class.
+ * --------------------------------------------------
+ * Before applying this recipe:
+ * import com.azure.core.util.Context;
+ * com.azure.core.http.rest.RequestOptions;
+ * ...
+ * public void context(){ print(Context.NONE); }
+ * --------------------------------------------------
+ * After applying this recipe:
+ * import io.clientcore.core.util.Context;
+ * io.clientcore.core.http.models.RequestOptions
+ * ...
+ * public void context(){ print(Context.none()); }
+ * --------------------------------------------------
+ * @author Ali Soltanian Fard Jahromi
+ */
+<span class="fc" id="L29">public class ContextRecipe extends Recipe {</span>
+    /**
+     * Method to return a simple short description of ContextRecipe
+     * @return A simple short description/name of the recipe
+     */
+    @Override
+    public @NotNull String getDisplayName() {
+<span class="fc" id="L36">        return &quot;Change static field 'Context.NONE' to Method 'Context.none()'&quot;;</span>
+    }
+    /**
+     * Method to return a description of ContextRecipe
+     * @return A short description of the recipe
+     */
+    @Override
+    public @NotNull String getDescription() {
+<span class="fc" id="L44">        return &quot;This recipe changes any calls to Context.NONE to Context.none().\n&quot; +</span>
+                &quot;It also changes the import statement of com.azure.core.util.Context to io.clientcore.core.util.Context.&quot;;
+    }
+    /**
+     * Method to return the visitor that visits the Context.NONE identifier
+     * @return A TreeVisitor to visit the NONE identifier and change it to none()
+     */
+    @Override
+    public @NotNull TreeVisitor&lt;?, ExecutionContext&gt; getVisitor() {
+<span class="fc" id="L53">        return new ChangeStaticFieldToMethodVisitor();</span>
+    }
+    /**
+     * Visitor to change NONE identifier to none()
+     */
+    private static class ChangeStaticFieldToMethodVisitor extends JavaIsoVisitor&lt;ExecutionContext&gt; {
+        /**
+         * Method to change com.azure.core.util.Context to io.clientcore.core.util.Context
+         */
+        @Override
+        public J.@NotNull FieldAccess visitFieldAccess(J.@NotNull FieldAccess fieldAccess, @NotNull ExecutionContext ctx) {
+<span class="fc" id="L64">            J.FieldAccess visitedFieldAccess = super.visitFieldAccess(fieldAccess, ctx);</span>
+<span class="fc" id="L65">            String fullyQualified = visitedFieldAccess.getTarget() + &quot;.&quot; + visitedFieldAccess.getSimpleName();</span>
+<span class="fc bfc" id="L66" title="All 2 branches covered.">            if (fullyQualified.equals(&quot;com.azure.core.http.rest.RequestOptions&quot;)) {</span>
+<span class="fc" id="L67">                return TypeTree.build(&quot; io.clientcore.core.http.models.RequestOptions&quot;);</span>
+            }
+<span class="fc bfc" id="L69" title="All 2 branches covered.">            if (fullyQualified.equals(&quot;com.azure.core.util.Context&quot;)) {</span>
+<span class="fc" id="L70">                return TypeTree.build(&quot; io.clientcore.core.util.Context&quot;);</span>
+            }
+<span class="fc bfc" id="L72" title="All 2 branches covered.">            if (fullyQualified.equals(&quot;Context.NONE&quot;)){</span>
+<span class="fc" id="L73">                return TypeTree.build(&quot;Context.none()&quot;);</span>
+            }
+<span class="fc" id="L75">            return visitedFieldAccess;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

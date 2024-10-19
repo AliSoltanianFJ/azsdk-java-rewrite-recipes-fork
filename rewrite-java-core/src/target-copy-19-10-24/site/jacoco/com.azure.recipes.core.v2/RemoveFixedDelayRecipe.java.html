@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RemoveFixedDelayRecipe.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rewrite-java-core</a> &gt; <a href="index.source.html" class="el_package">com.azure.recipes.core.v2</a> &gt; <span class="el_source">RemoveFixedDelayRecipe.java</span></div><h1>RemoveFixedDelayRecipe.java</h1><pre class="source lang-java linenums">package com.azure.recipes.core.v2;
+
+import org.jetbrains.annotations.NotNull;
+import org.openrewrite.ExecutionContext;
+import org.openrewrite.Recipe;
+import org.openrewrite.TreeVisitor;
+import org.openrewrite.java.JavaIsoVisitor;
+import org.openrewrite.java.tree.J;
+
+/**
+ * RemoveFixedDelayRecipe removes any leftover imports for FixedDelayOptions
+ * and any variables declared with the FixedDelayOptions type.
+ * --------------------------------------------------
+ * Removes code such as:
+ * import com.azure.core.http.policy.FixedDelayOptions;
+ * ...
+ * FixedDelayOptions s;
+ * --------------------------------------------------
+ * @author Ali Soltanian Fard Jahromi
+ */
+<span class="fc" id="L21">public class RemoveFixedDelayRecipe extends Recipe {</span>
+    /**
+     * Method to return a simple short description of RemoveFixedDelayRecipe
+     * @return A simple short description/name of the recipe
+     */
+    @Override
+    public @NotNull String getDisplayName() {
+<span class="fc" id="L28">        return &quot;Removes imports and variable declarations for FixedDelayOptions&quot;;</span>
+    }
+    /**
+     * Method to return a description of RemoveFixedDelayRecipe
+     * @return A short description of the recipe
+     */
+    @Override
+    public @NotNull String getDescription() {
+<span class="fc" id="L36">        return &quot;This recipe removes any leftover imports and variables using FixedDelayOptions.&quot;;</span>
+    }
+    /**
+     * Method to return the visitor that visits the usages of FixedDelayOptions
+     * @return A TreeVisitor to visit the usages of FixedDelayOptions
+     */
+    @Override
+    public @NotNull TreeVisitor&lt;?, ExecutionContext&gt; getVisitor() {
+<span class="fc" id="L44">        return new FixedDelayVisitor();</span>
+    }
+    /**
+     * Visitor to remove FixedDelayOptions
+     */
+    private static class FixedDelayVisitor extends JavaIsoVisitor&lt;ExecutionContext&gt; {
+        /**
+         * Method to remove unnecessary import for FixedDelay
+         */
+        @Override
+        public J.Import visitImport(J.Import _import, ExecutionContext executionContext) {
+<span class="fc" id="L55">            J.Import visitedImport = super.visitImport(_import, executionContext);</span>
+<span class="pc bpc" id="L56" title="1 of 2 branches missed.">            if (visitedImport.getQualid() != null){</span>
+<span class="fc bfc" id="L57" title="All 2 branches covered.">                if (visitedImport.getQualid().getSimpleName().contains(&quot;FixedDelay&quot;)){</span>
+<span class="fc" id="L58">                    return null;</span>
+                }
+            }
+<span class="fc" id="L61">            return visitedImport;</span>
+        }
+        /**
+         * Method to remove unnecessary variable declarations for FixedDelay
+         */
+        @Override
+        public J.VariableDeclarations visitVariableDeclarations(J.VariableDeclarations multiVariable, ExecutionContext executionContext) {
+<span class="fc" id="L68">            J.VariableDeclarations visitedVar = super.visitVariableDeclarations(multiVariable, executionContext);</span>
+<span class="pc bpc" id="L69" title="1 of 2 branches missed.">            if (visitedVar.getTypeExpression() == null) {</span>
+<span class="nc" id="L70">                return visitedVar;</span>
+            }
+<span class="fc bfc" id="L72" title="All 2 branches covered.">            if (visitedVar.getTypeExpression().toString().contains(&quot;FixedDelayOptions&quot;)) {</span>
+                // Return null to remove the block
+<span class="fc" id="L74">                return null;</span>
+            }
+<span class="fc" id="L76">            return visitedVar;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

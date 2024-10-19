@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HttpLogOptionsRecipe.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rewrite-java-core</a> &gt; <a href="index.source.html" class="el_package">com.azure.recipes.core.v2</a> &gt; <span class="el_source">HttpLogOptionsRecipe.java</span></div><h1>HttpLogOptionsRecipe.java</h1><pre class="source lang-java linenums">package com.azure.recipes.core.v2;
+
+import org.jetbrains.annotations.NotNull;
+import org.openrewrite.ExecutionContext;
+import org.openrewrite.Recipe;
+import org.openrewrite.TreeVisitor;
+import org.openrewrite.java.JavaIsoVisitor;
+import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.TypeTree;
+
+/**
+ * HttpLogOptionsRecipe change usage of the com.azure.core.http.policy.HttpLogDetailLevel while also changing
+ * the com.azure.core.http.policy.HttpLogOptions Type.
+ * The import statements are also updated.
+ * Changes:
+ * com.azure.core.http.policy.HttpLogDetailLevel -&gt; io.clientcore.core.http.models.HttpLogOptions.HttpLogDetailLevel
+ * com.azure.core.http.policy.HttpLogOptions     -&gt; io.clientcore.core.http.models.HttpLogOptions
+ * --------------------------------------------------
+ * Before applying this recipe:
+ * import com.azure.core.http.policy.HttpLogDetailLevel;
+ * import com.azure.core.http.policy.HttpLogOptions;
+ * ...
+ * public void logOptions(){ print(new HttpLogOptions().setLogLevel(HttpLogDetailLevel.BODY_AND_HEADERS)); }
+ * --------------------------------------------------
+ * After applying this recipe:
+ * import io.clientcore.core.http.models.HttpLogOptions;
+ * ...
+ * public void logOptions(){ print(new HttpLogOptions().setLogLevel(HttpLogOptions.HttpLogDetailLevel.BODY_AND_HEADERS)); }
+ * --------------------------------------------------
+ * @author Ali Soltanian Fard Jahromi
+ */
+<span class="fc" id="L32">public class HttpLogOptionsRecipe extends Recipe {</span>
+    /**
+     * Method to return a simple short description of HttpLogOptionsRecipe
+     * @return A simple short description/name of the recipe
+     */
+    @Override
+    public @NotNull String getDisplayName() {
+<span class="fc" id="L39">        return &quot;Migrate the HttpLogOptions and HttpLogDetail usages&quot;;</span>
+    }
+    /**
+     * Method to return a description of HttpLogOptionsRecipe
+     * @return A short description of the recipe
+     */
+    @Override
+    public @NotNull String getDescription() {
+<span class="fc" id="L47">        return &quot;This recipe changes any usages of HttpLogOptions from azure core v1 to its respective type from azure core v2.\n&quot; +</span>
+                &quot;It also migrates any usages of HttpLogDetailLevel to azure core v2.&quot;;
+    }
+    /**
+     * Method to return the visitor that visits the usages of HttpLogOptions and HttpLogDetailLevel
+     * @return A TreeVisitor to visit the usages of HttpLogOptions and HttpLogDetailLevel
+     */
+    @Override
+    public @NotNull TreeVisitor&lt;?, ExecutionContext&gt; getVisitor() {
+<span class="fc" id="L56">        return new HttpLogOptionsVisitor();</span>
+    }
+    /**
+     * Visitor to change HttpLogOptions type and change usage of HttpLogDetailLevel
+     */
+    private static class HttpLogOptionsVisitor extends JavaIsoVisitor&lt;ExecutionContext&gt; {
+        /**
+         * Method to change usage of the HttpLogDetailLevel while also changing the HttpLogOptions Type
+         */
+        @Override
+        public J.@NotNull FieldAccess visitFieldAccess(J.@NotNull FieldAccess fieldAccess, @NotNull ExecutionContext ctx) {
+<span class="fc" id="L67">            J.FieldAccess visitedFieldAccess = super.visitFieldAccess(fieldAccess, ctx);</span>
+<span class="fc" id="L68">            String fullyQualified = visitedFieldAccess.getTarget() + &quot;.&quot; + visitedFieldAccess.getSimpleName();</span>
+<span class="fc bfc" id="L69" title="All 2 branches covered.">            if (fullyQualified.equals(&quot;com.azure.core.http.policy.HttpLogOptions&quot;)) {</span>
+<span class="fc" id="L70">               return TypeTree.build(&quot; io.clientcore.core.http.models.HttpLogOptions&quot;);</span>
+            }
+<span class="fc bfc" id="L72" title="All 2 branches covered.">            if (fullyQualified.equals(&quot;com.azure.core.http.policy.HttpLogDetailLevel&quot;) &amp;&amp;</span>
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">                    visitedFieldAccess.getSimpleName().equals(&quot;HttpLogDetailLevel&quot;) &amp;&amp;</span>
+<span class="pc bpc" id="L74" title="1 of 2 branches missed.">                    visitedFieldAccess.print().contains(&quot;com.azure&quot;)){</span>
+<span class="fc" id="L75">                return TypeTree.build(&quot; io.clientcore.core.http.models.HttpLogOptions.HttpLogDetailLevel&quot;);</span>
+            }
+<span class="fc" id="L77">            return visitedFieldAccess;</span>
+        }
+        /**
+         * Method to remove unnecessary import fo HttpLogDetailLevel as the class is already included in client-core HttpLogOptions class
+         */
+        @Override
+        public J.Import visitImport(J.Import _import, ExecutionContext executionContext) {
+<span class="fc" id="L84">            J.Import visitedImport = super.visitImport(_import, executionContext);</span>
+<span class="fc bfc" id="L85" title="All 2 branches covered.">            if (visitedImport.getQualid().getSimpleName().contains(&quot;HttpLogDetailLevel&quot;)){</span>
+<span class="fc" id="L86">                return null;</span>
+            }
+<span class="fc" id="L88">            return visitedImport;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

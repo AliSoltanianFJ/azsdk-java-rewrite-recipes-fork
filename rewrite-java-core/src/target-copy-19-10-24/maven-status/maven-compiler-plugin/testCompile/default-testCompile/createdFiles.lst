@@ -1,0 +1,16 @@
+com\azure\recipes\core\v2\AddTryCatchToMethodCallUnitTest.class
+com\azure\recipes\core\v2\BinaryDataTest.class
+com\azure\recipes\core\v2\TextTranslationClientBuilderHttpTraitTest.class
+com\azure\recipes\core\v2\ClientLoggerTest.class
+com\azure\recipes\core\v2\UtilConfigurationTest.class
+com\azure\recipes\core\v2\ExceptionTypesTest.class
+com\azure\recipes\core\v2\ResponseTest.class
+com\azure\recipes\core\v2\RetryOptionsConstructorTest.class
+com\azure\recipes\core\v2\CoreUtilsTest.class
+com\azure\recipes\core\v2\RequestOptionsTest.class
+com\azure\recipes\core\v2\TypeReferenceTest.class
+com\azure\recipes\core\v2\HttpLogOptionsTest.class
+com\azure\recipes\core\v2\CredentialTest.class
+com\azure\recipes\core\v2\AddTryCatchToMethodCallTest.class
+com\azure\recipes\core\v2\ContextTest.class
+com\azure\recipes\core\v2\HttpHeaderNameTest.class

@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AddTryCatchToMethodCallRecipe.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rewrite-java-core</a> &gt; <a href="index.source.html" class="el_package">com.azure.recipes.core.v2</a> &gt; <span class="el_source">AddTryCatchToMethodCallRecipe.java</span></div><h1>AddTryCatchToMethodCallRecipe.java</h1><pre class="source lang-java linenums">package com.azure.recipes.core.v2;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jetbrains.annotations.NotNull;
+import org.openrewrite.*;
+import org.openrewrite.internal.ListUtils;
+import org.openrewrite.internal.lang.NonNull;
+import org.openrewrite.internal.lang.Nullable;
+import org.openrewrite.java.JavaIsoVisitor;
+import org.openrewrite.java.JavaTemplate;
+import org.openrewrite.java.MethodMatcher;
+
+import lombok.EqualsAndHashCode;
+import lombok.Value;
+import org.openrewrite.java.tree.Expression;
+import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.MethodCall;
+import org.openrewrite.java.tree.Statement;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Supplier;
+import java.util.regex.Pattern;
+
+/**
+ * Add try-catch to method recipe places all calls to methods matching the provided method
+ * pattern in a try-catch block based off the template provided.
+ * Recipe will attempt to use the JavaParser first, but will also run on code that cannot be
+ * parsed by Open Rewrites Java parser.
+ * Recipe does not check if the method throws the supplied exception, only that the method is
+ * in a suitable try-catch block.
+ * If the template is not syntactically correct, the recipe will not make any changes.
+ * @author Annabelle Mittendorf Smith
+ */
+
+@Value
+@EqualsAndHashCode(callSuper = false)
+public class AddTryCatchToMethodCallRecipe extends Recipe {
+
+    @Option(displayName = &quot;Method pattern&quot;,
+            description = &quot;A method pattern used to find matching method declaration.&quot;,
+            example = &quot;*..* hello(..)&quot;)
+    @NonNull
+    String methodPattern;
+
+    @Option(displayName = &quot;Catch template&quot;,
+            description = &quot;The code snippet to be executed in the catch block&quot;,
+            example = &quot;catch (IOException e) { e.printStackTrace(); }&quot;)
+    @NonNull
+    String catchTemplateString;
+
+    @Option(displayName = &quot;Exclude owner of method&quot;,
+            description = &quot;When enabled, the owner (class) from which the method originates from will not be matched during search.&quot;,
+            required = false)
+    @NonNull
+    boolean excludeOwner;
+
+    @Option(displayName = &quot;Fully qualified exception name&quot;,
+            description = &quot;The fully qualified type name for the caught exception&quot;,
+            example = &quot;java.io.IOException&quot;)
+    @NonNull
+    String fullyQualifiedExceptionName;
+
+    /**
+     * All recipes must be serializable. This is verified by RewriteTest.rewriteRun() in your tests.
+     * Json creator allows your recipes to be used from a yaml file.
+     */
+    @JsonCreator
+    public AddTryCatchToMethodCallRecipe(@NonNull @JsonProperty(&quot;methodPattern&quot;) String methodPattern,
+                                         @NonNull @JsonProperty(&quot;catchTemplateString&quot;) String catchTemplateString,
+                                         @NonNull @JsonProperty(&quot;fullyQualifiedExceptionName&quot;) String fullyQualifiedExceptionName,
+<span class="fc" id="L74">                                         @Nullable @JsonProperty(&quot;excludeOwner&quot;) boolean excludeOwner) {</span>
+<span class="fc" id="L75">        this.methodPattern = methodPattern;</span>
+<span class="fc" id="L76">        this.excludeOwner = excludeOwner;</span>
+<span class="fc" id="L77">        this.catchTemplateString = catchTemplateString;</span>
+<span class="fc" id="L78">        this.fullyQualifiedExceptionName = fullyQualifiedExceptionName;</span>
+<span class="fc" id="L79">    }</span>
+
+
+    @Override
+    public @NlsRewrite.DisplayName @NotNull String getDisplayName() {
+<span class="fc" id="L84">        return &quot;Add try-catch to method&quot;;</span>
+    }
+
+    @Override
+    public @NlsRewrite.Description @NotNull String getDescription() {
+<span class="fc" id="L89">        return &quot;Surrounds calls to the target method in a custom try-catch block.&quot;;</span>
+    }
+
+    /**
+     * Method to return the visitor that performs the checks and changes
+     *
+     * @return Returns the visitor that performs the checks and changes
+     */
+    @Override
+    public @NotNull TreeVisitor&lt;?, ExecutionContext&gt; getVisitor() {
+<span class="fc" id="L99">        return new AddTryCatchVisitor();</span>
+    }
+
+    /**
+     * Visitor that performs the checks and changes
+     */
+<span class="pc bpc" id="L105" title="1 of 2 branches missed.">    private class AddTryCatchVisitor extends JavaIsoVisitor&lt;ExecutionContext&gt; {</span>
+
+<span class="fc" id="L107">        private final MethodMatcher methodMatcher = new MethodMatcher(methodPattern, true);</span>
+
+        /**
+         * Overridden visitBlock method performs the changes to methods filtered by visitMethodCall.
+         */
+        @Override
+        public J.@NotNull Block visitBlock(J.@NotNull Block block, @NotNull ExecutionContext context) {
+<span class="fc" id="L114">            J.Block body = super.visitBlock(block, context);</span>
+
+            // Get the method that needs to be changed
+<span class="fc" id="L117">            MethodCall method = getCursor().pollMessage(&quot;METHOD&quot;);</span>
+<span class="fc bfc" id="L118" title="All 2 branches covered.">            if (method == null) {</span>
+<span class="fc" id="L119">                return body;</span>
+            }
+
+            //Get the parents of the method
+<span class="fc" id="L123">            Tree parent = getCursor().pollMessage(&quot;PARENT&quot;);</span>
+            // Get the first statement parent of method
+<span class="fc" id="L125">            Statement parentStatement = getCursor().pollMessage(&quot;STATEMENT&quot;);</span>
+
+<span class="fc" id="L127">            JavaTemplate tryCatchTemplate = JavaTemplate.builder(&quot;try { int a = null; a = 3; } &quot; + catchTemplateString)</span>
+<span class="fc" id="L128">                    .imports(fullyQualifiedExceptionName)</span>
+<span class="fc" id="L129">                    .build();</span>
+
+            // Create an empty block to apply the try-catch template based off the cursor values from the main body
+            // This should create the correct formatting.
+<span class="fc" id="L133">            J.Block b = J.Block.createEmptyBlock();</span>
+<span class="fc" id="L134">            b = tryCatchTemplate.apply(new Cursor(getCursor(),b), b.getCoordinates().firstStatement());</span>
+            int parentIndex;
+
+            // Extract the try-catch block and dummy elements
+<span class="fc" id="L138">            J.Try _try = (J.Try) b.getStatements().get(0);</span>
+<span class="fc" id="L139">            J.VariableDeclarations dummyVarDec = (J.VariableDeclarations) _try.getBody().getStatements().get(0);</span>
+<span class="fc" id="L140">            J.Assignment dummyAssignment = (J.Assignment) _try.getBody().getStatements().get(1);</span>
+
+<span class="pc bpc" id="L142" title="1 of 2 branches missed.">            if (_try.getCatches().isEmpty()) {</span>
+                // The catch template was incorrect, recipe is unsafe.
+<span class="nc" id="L144">                return body;</span>
+            }
+            // The original list of statements to alter
+<span class="fc" id="L147">            List&lt;Statement&gt; bodyStatements = body.getStatements();</span>
+
+            // Method is the first element on its line.
+<span class="fc bfc" id="L150" title="All 2 branches covered.">            if (parent == null) {</span>
+                // Cast method as a statement and update the indentation (prefix)
+
+<span class="fc" id="L153">                Statement methodStatement = method.withPrefix(dummyVarDec.getPrefix());</span>
+<span class="fc" id="L154">                parentIndex = body.getStatements().indexOf(methodStatement);</span>
+                // Make it the only statement in the try block
+<span class="fc" id="L156">                _try = _try.withBody(_try.getBody().withStatements(ListUtils.insert(</span>
+                        new ArrayList&lt;&gt;(), methodStatement, 0 )));
+
+                // Update the statements
+<span class="fc" id="L160">                bodyStatements.set(parentIndex, _try);</span>
+<span class="fc" id="L161">            }</span>
+<span class="fc bfc" id="L162" title="All 2 branches covered.">            else if (parent instanceof J.Assignment) {</span>
+<span class="fc" id="L163">                parentIndex = body.getStatements().indexOf(parent);</span>
+<span class="fc" id="L164">                J.Assignment new_assignment = ((J.Assignment) parent).withPrefix(dummyAssignment.getPrefix());</span>
+
+<span class="fc" id="L166">                _try = _try.withBody(_try.getBody().withStatements(ListUtils.insert(</span>
+                        new ArrayList&lt;&gt;(), new_assignment, 0 )));
+
+<span class="fc" id="L169">                bodyStatements.set(parentIndex, _try);</span>
+<span class="fc" id="L170">            }</span>
+<span class="fc bfc" id="L171" title="All 2 branches covered.">            else if (parentStatement instanceof J.VariableDeclarations) {</span>
+
+<span class="fc" id="L173">                J.VariableDeclarations parentVd = (J.VariableDeclarations) parentStatement;</span>
+<span class="fc" id="L174">                parentIndex = body.getStatements().indexOf(parentVd);</span>
+
+<span class="pc bpc" id="L176" title="1 of 2 branches missed.">                if (parentVd.getVariables().size() != 1) {</span>
+                    // Recipe can only handle a variable declaration with a single named variable at this time
+                    // Could be changed.
+<span class="nc" id="L179">                    return body;</span>
+                }
+
+<span class="fc" id="L182">                J.VariableDeclarations.NamedVariable namedVariable = parentVd.getVariables().get(0);</span>
+<span class="fc" id="L183">                Expression expression = namedVariable.getInitializer();</span>
+
+<span class="pc bpc" id="L185" title="2 of 4 branches missed.">                assert expression != null;</span>
+                // Repurpose the dummyAssignment variable
+<span class="fc" id="L187">                dummyAssignment = dummyAssignment.withVariable(namedVariable.getName().unwrap());</span>
+<span class="fc" id="L188">                dummyAssignment = dummyAssignment.withAssignment(expression);</span>
+
+<span class="fc" id="L190">                _try = _try.withBody(_try.getBody().withStatements(ListUtils.insert(</span>
+                       new ArrayList&lt;&gt;(), dummyAssignment, 0 )));
+
+                // Make the original declaration initialise with '= null'
+<span class="fc" id="L194">                namedVariable = namedVariable.withInitializer(dummyVarDec.getVariables().get(0).getInitializer());</span>
+
+<span class="fc" id="L196">                parentVd = parentVd.withVariables(ListUtils.insert(</span>
+                        new ArrayList&lt;&gt;(), namedVariable, 0 ));
+
+                // Replace the old VariableDeclarations
+<span class="fc" id="L200">                bodyStatements.set(parentIndex, parentVd);</span>
+                // Add the try below it
+<span class="fc" id="L202">                bodyStatements.add(parentIndex +1, _try);</span>
+
+<span class="fc" id="L204">            }</span>
+            else { // Wrap method call in try catch for all other cases
+<span class="fc" id="L206">                int i = 0;</span>
+<span class="fc" id="L207">                int index = -1;</span>
+<span class="fc bfc" id="L208" title="All 2 branches covered.">                for (Statement statement : body.getStatements()) {</span>
+<span class="pc bpc" id="L209" title="1 of 2 branches missed.">                    if (statement.print().contains(method.print())) {</span>
+<span class="fc" id="L210">                        index = i;</span>
+                    }
+<span class="fc" id="L212">                    i ++;</span>
+<span class="fc" id="L213">                }</span>
+<span class="fc" id="L214">                String tryCatchBlock = String.format(</span>
+<span class="fc" id="L215">                        &quot;try { %s; } %s&quot;, body.getStatements().get(index), catchTemplateString</span>
+                );
+<span class="fc" id="L217">                JavaTemplate tryCatchNewTemplate = JavaTemplate.builder(tryCatchBlock)</span>
+<span class="fc" id="L218">                        .imports(fullyQualifiedExceptionName)</span>
+<span class="fc" id="L219">                        .build();</span>
+
+                // Create an empty block to apply the try-catch template based off the cursor values from the main body
+                // This should create the correct formatting.
+<span class="fc" id="L223">                J.Block newBlock = J.Block.createEmptyBlock();</span>
+<span class="fc" id="L224">                newBlock = tryCatchNewTemplate.apply(new Cursor(getCursor(),newBlock), newBlock.getCoordinates().firstStatement());</span>
+
+<span class="fc" id="L226">                bodyStatements.remove(index);</span>
+<span class="fc bfc" id="L227" title="All 2 branches covered.">                for (Statement statement : newBlock.getStatements()) {</span>
+<span class="fc" id="L228">                    bodyStatements.add(index, statement);</span>
+<span class="fc" id="L229">                }</span>
+            }
+
+            // Update the body block with the new set of statements and return.
+<span class="fc" id="L233">            body = body.withStatements(bodyStatements);</span>
+            // Add the import if needed
+<span class="fc" id="L235">            maybeAddImport(fullyQualifiedExceptionName,false);</span>
+<span class="fc" id="L236">            return body;</span>
+        }
+        public boolean containsSubstringWithParenthesis(String input, String substring) {
+<span class="fc" id="L239">            String regex = substring + &quot;\\s*\\(&quot;;</span>
+<span class="fc" id="L240">            return input.matches(&quot;.*&quot; + regex + &quot;.*&quot;);</span>
+        }
+
+
+        /**
+         * Method to find method calls that need to be wrapped
+         */
+        private &lt;M extends MethodCall&gt; @Nullable M visitMethodCall(M methodCall, Supplier&lt;M&gt; visitSuper) {
+<span class="fc bfc" id="L248" title="All 2 branches covered.">            if (!methodMatcher.matches(methodCall)) {</span>
+<span class="fc bfc" id="L249" title="All 2 branches covered.">                if (!excludeOwner) {</span>
+                    // Make no changes
+<span class="fc" id="L251">                    return visitSuper.get();</span>
+                }
+<span class="fc bfc" id="L253" title="All 2 branches covered.">                if (!containsSubstringWithParenthesis(methodCall.toString(), methodPattern.replaceAll(&quot;\\(.*?\\)&quot;, &quot;&quot;).</span>
+<span class="fc" id="L254">                        replaceAll(&quot;\\*&quot;, &quot;&quot;).trim().split(&quot; &quot;)[1])){</span>
+                    // Make no changes
+<span class="fc" id="L256">                    return visitSuper.get();</span>
+                }
+            }
+            // If match found, check that it is not already handled by a try block
+            try {
+                // Get the first upstream try block. Will throw exception if there are none
+<span class="fc" id="L262">                J.Try _try = getCursor().dropParentUntil(it -&gt; it instanceof J.Try).getValue();</span>
+
+                // Get the first enclosing block
+<span class="fc" id="L265">                J.Block block = getCursor().dropParentUntil(it -&gt; it instanceof J.Block).getValue();</span>
+
+                // Check to see if this try block is the parent of the enclosing block
+<span class="pc bpc" id="L268" title="1 of 2 branches missed.">                if (_try.getBody().equals(block)) {</span>
+                    // Check if the correct exception is caught
+<span class="fc" id="L270">                    boolean isCaught = _try.getCatches().stream().anyMatch(</span>
+<span class="fc" id="L271">                            _catch -&gt; Objects.requireNonNull(_catch.getParameter().getType())</span>
+<span class="fc" id="L272">                                    .isAssignableFrom(Pattern.compile(fullyQualifiedExceptionName)));</span>
+
+                    // Make no changes if exception already caught
+<span class="pc bpc" id="L275" title="1 of 2 branches missed.">                    if (isCaught) {</span>
+<span class="fc" id="L276">                        return visitSuper.get();</span>
+                    }
+                }
+<span class="pc" id="L279">            } catch (IllegalStateException ignored) {}</span>
+            // If the method matches and exception is not caught set messages for block
+<span class="fc" id="L281">            getCursor().putMessageOnFirstEnclosing(J.Block.class, &quot;METHOD&quot;, methodCall);</span>
+
+<span class="fc" id="L283">            Tree parent = getCursor().getParentTreeCursor().getValue();</span>
+<span class="fc bfc" id="L284" title="All 2 branches covered.">            if (! (parent instanceof J.Block)) {</span>
+                // If the method is part of a nested statement flag the direct tree parent
+<span class="fc" id="L286">                getCursor().putMessageOnFirstEnclosing(J.Block.class, &quot;PARENT&quot;, parent);</span>
+                try {
+                    // And the first parent that is a statement
+<span class="fc" id="L289">                    Statement statement = getCursor().dropParentUntil(it -&gt; it instanceof Statement).getValue();</span>
+<span class="fc" id="L290">                    getCursor().putMessageOnFirstEnclosing(J.Block.class, &quot;STATEMENT&quot;, statement);</span>
+<span class="pc" id="L291">                } catch (IllegalStateException ignored) {}</span>
+            }
+
+<span class="fc" id="L294">            return visitSuper.get();</span>
+        }
+
+        /**
+         * The Suppliers that traverse the LST and redirect all types of method calls through visitMethodCall.
+         */
+
+        @Override
+        public J.NewClass visitNewClass(J.NewClass newClass, ExecutionContext context) {
+<span class="fc" id="L303">            return visitMethodCall(newClass, () -&gt; super.visitNewClass(newClass, context));</span>
+        }
+
+        @Override
+        public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, ExecutionContext context) {
+<span class="fc" id="L308">            return visitMethodCall(method, () -&gt; super.visitMethodInvocation(method, context));</span>
+        }
+
+        @Override
+        public J.MemberReference visitMemberReference(J.MemberReference memberRef, ExecutionContext context) {
+<span class="nc" id="L313">            return visitMethodCall(memberRef, () -&gt; super.visitMemberReference(memberRef, context));</span>
+        }
+
+    } // end catchUncheckedVisitor
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

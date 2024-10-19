@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.azure.recipes.core.v2.CoreUtilsTest
+-------------------------------------------------------------------------------
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.254 s -- in com.azure.recipes.core.v2.CoreUtilsTest

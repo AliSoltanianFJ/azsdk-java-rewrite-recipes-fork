@@ -1,0 +1,15 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+rewrite-java-core,com.azure.recipes.core.v2,RetryOptionsConstructorRecipe,0,12,0,0,0,4,0,4,0,4
+rewrite-java-core,com.azure.recipes.core.v2,TypeReferenceRecipe,0,12,0,0,0,4,0,4,0,4
+rewrite-java-core,com.azure.recipes.core.v2,RemoveFixedDelayRecipe.FixedDelayVisitor,2,36,2,6,1,10,2,4,0,2
+rewrite-java-core,com.azure.recipes.core.v2,ContextRecipe,0,12,0,0,0,4,0,4,0,4
+rewrite-java-core,com.azure.recipes.core.v2,HttpLogOptionsRecipe.HttpLogOptionsVisitor,0,61,2,8,0,13,2,5,0,2
+rewrite-java-core,com.azure.recipes.core.v2,RemoveFixedDelayRecipe,0,12,0,0,0,4,0,4,0,4
+rewrite-java-core,com.azure.recipes.core.v2,RetryOptionsConstructorRecipe.RetryVisitor,8,181,5,21,1,43,5,14,0,6
+rewrite-java-core,com.azure.recipes.core.v2,TypeReferenceRecipe.ConvertTypeReferenceVisitor,63,442,10,40,8,82,9,25,0,9
+rewrite-java-core,com.azure.recipes.core.v2,ContextRecipe.ChangeStaticFieldToMethodVisitor,0,44,0,6,0,9,0,4,0,1
+rewrite-java-core,com.azure.recipes.core.v2,ResponseRecipe.UpdateResponseVisitor,0,28,0,2,0,5,0,2,0,1
+rewrite-java-core,com.azure.recipes.core.v2,AddTryCatchToMethodCallRecipe.AddTryCatchVisitor,26,541,8,28,3,93,10,23,2,13
+rewrite-java-core,com.azure.recipes.core.v2,AddTryCatchToMethodCallRecipe,0,25,0,0,0,9,0,4,0,4
+rewrite-java-core,com.azure.recipes.core.v2,HttpLogOptionsRecipe,0,12,0,0,0,4,0,4,0,4
+rewrite-java-core,com.azure.recipes.core.v2,ResponseRecipe,0,12,0,0,0,4,0,4,0,4

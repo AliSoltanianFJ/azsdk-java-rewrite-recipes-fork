@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ResponseRecipe.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rewrite-java-core</a> &gt; <a href="index.source.html" class="el_package">com.azure.recipes.core.v2</a> &gt; <span class="el_source">ResponseRecipe.java</span></div><h1>ResponseRecipe.java</h1><pre class="source lang-java linenums">package com.azure.recipes.core.v2;
+
+import org.jetbrains.annotations.NotNull;
+import org.openrewrite.ExecutionContext;
+import org.openrewrite.Recipe;
+import org.openrewrite.TreeVisitor;
+import org.openrewrite.java.JavaIsoVisitor;
+import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.TypeTree;
+
+/**
+ * ResponseRecipe changes all instances of Response (from azure core v1) to Response (from azure core v2).
+ * This recipe also updates the import statements for the aforementioned class.
+ * --------------------------------------------------
+ * Before applying this recipe:
+ * import com.azure.core.http.rest.Response;
+ * --------------------------------------------------
+ * After applying this recipe:
+ * import io.clientcore.core.http.models.Response;
+ * --------------------------------------------------
+ * @author Ali Soltanian Fard Jahromi
+ */
+<span class="fc" id="L23">public class ResponseRecipe extends Recipe {</span>
+    /**
+     * Method to return a simple short description of ResponseRecipe
+     * @return A simple short description/name of the recipe
+     */
+    @Override
+    public @NotNull String getDisplayName() {
+<span class="fc" id="L30">        return &quot;Update Response type to v2 version&quot;;</span>
+    }
+    /**
+     * Method to return a description of ResponseRecipe
+     * @return A short description of the recipe
+     */
+    @Override
+    public @NotNull String getDescription() {
+<span class="fc" id="L38">        return &quot;This recipe changes com.azure.core.http.rest.Response to io.clientcore.core.http.models.Response.&quot;;</span>
+    }
+    /**
+     * Method to return the visitor that visits the Response class
+     * @return A TreeVisitor to visit the Response class and update it
+     */
+    @Override
+    public @NotNull TreeVisitor&lt;?, ExecutionContext&gt; getVisitor() {
+<span class="fc" id="L46">        return new UpdateResponseVisitor();</span>
+    }
+    /**
+     * Visitor to update Response
+     */
+    private static class UpdateResponseVisitor extends JavaIsoVisitor&lt;ExecutionContext&gt; {
+        /**
+         * Method to change com.azure.core.http.rest.Response to io.clientcore.core.http.models.Response
+         */
+        @Override
+        public J.@NotNull FieldAccess visitFieldAccess(J.@NotNull FieldAccess fieldAccess, @NotNull ExecutionContext ctx) {
+<span class="fc" id="L57">            J.FieldAccess visitedFieldAccess = super.visitFieldAccess(fieldAccess, ctx);</span>
+<span class="fc" id="L58">            String fullyQualified = visitedFieldAccess.getTarget() + &quot;.&quot; + visitedFieldAccess.getSimpleName();</span>
+<span class="fc bfc" id="L59" title="All 2 branches covered.">            if (fullyQualified.equals(&quot;com.azure.core.http.rest.Response&quot;)) {</span>
+<span class="fc" id="L60">                return TypeTree.build(&quot; io.clientcore.core.http.models.Response&quot;);</span>
+            }
+<span class="fc" id="L62">            return visitedFieldAccess;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
